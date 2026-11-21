@@ -2904,31 +2904,53 @@ Found by the nightly on develop 8b824749 (failed 11-16 to 11-21).
 - **Done when:** `scripts/gates.sh --shared-only` and one app pass; the
   image test passes all checks and leaves no image attached.
 
-### K24. One outbox drain budget per request (backlog, about half a day; not a release blocker)
-Found by K22 (2026-11-21): ana's development seed waits 4.9-8.5 s, because
-directory drains its outbox once per member document it writes, and each
-drain may take up to 3 s (EVENTS.md section 4, items 3 and 6; slice K7).
-- **Why it is backlog, not a fix now:** drain on write with a 3 s budget
-  per written document is the decided design. It is not on the sign-in
-  path: identity only reads the person (`GET /directory/people/{id}`), and
-  `sessions-ended` saves only the person document, with no drain. It is not
-  MS1048 either: MS1048 is a store call over 5 s, and a drain is an HTTP
-  push, not a store call. The routes that wait for several drains are admin
-  writes (changing a person drains once per domain) and the
-  development-only seed, all under the router's 70 s.
-- **Builds, when taken:** one drain deadline per request instead of 3 s per
-  document. `kit/outbox` gets `Relay.RelayDocumentUntil(ref, deadline)`, and
-  `RelayDocument(ref)` stays as now plus 3 s. directory's seed join loop and
-  `PersonService.Change` -> `MirrorAll` take one deadline at the start and
-  pass it through `MemberWriterService`. A write after the deadline skips
-  the drain, and the relay sweep delivers its events. channels'
-  `POST /channels` does the same. EVENTS.md item 6 then says "at most 3 s
-  per request".
+### K24. Every relay and drain answer keeps its HTTP time bounded (backlog, about one day; not a release blocker)
+Found by K22 (2026-11-21). Phase 1: ana's development seed waits 4.9-8.5 s,
+because directory drains its outbox once per member document it writes,
+and each drain may take up to 3 s (EVENTS.md section 4, items 3 and 6;
+slice K7). Phase 2, try 1: directory's relay route made store calls, spent
+about 5 s on HTTP pushes, and the next store call failed with TY2160,
+because TACHYON 26.46.02 counted the HTTP time against its 5 s store
+deadline.
+- **Why it is backlog, not a blocker:** TACHYON decided (option B,
+  2026-11-21) that with the TAC-ST2 release the store deadline counts only
+  time inside store calls, so HTTP time between store calls no longer
+  stops fylo. Drain on write is the decided design, and it is not on the
+  sign-in path: identity only reads the person
+  (`GET /directory/people/{id}`), and `sessions-ended` saves only the person
+  document, with no drain. The routes that wait for several drains are
+  admin writes (changing a person drains once per domain) and the
+  development-only seed, all under the router's 70 s. If K22's rerun on the
+  TAC-ST2 release still shows a fylo stop caused by HTTP time, this becomes
+  a blocker again.
+- **Bound the relay anyway, for answer time:** a relay route relays a
+  document by loading it, pushing to each subscriber ONE AFTER ANOTHER with
+  the pusher's own limit of 10 s per push (`HTTPPusher.DefaultTimeout`,
+  `directPushes`), then saving it. directory's 1 s relay budget only stops it
+  from starting the next document, so one started document can take 10 s
+  per subscriber.
+- **Builds, when taken:** in `kit/outbox`, one HTTP-time deadline per
+  answer, about 3 s, for every relay and drain answer, covering the token
+  fetch and the pushes. Each push gets the smaller of 2 s and the time left
+  minus 1 s (kept for the save). Nothing new starts after the deadline, and
+  an unanswered push stays pending with no attempt counted, as the drain
+  already does. The relay answers `more: true`, and the scheduler calls again
+  at once (EVENTS.md section 4 item 5). `Relay.RelayDocumentUntil(ref,
+  deadline)` serves routes that write several documents (directory's seed
+  join loop and `PersonService.Change` -> `MirrorAll`, channels'
+  `POST /channels`), so one request shares one deadline. This covers
+  `kit/outbox` (copied to every app by `scripts/kit-sync.sh`), directory's and
+  messaging's own `OutboxRelayService` and channels' `OutboxDesk`. EVENTS.md
+  item 6 then says "at most about 3 s of HTTP time per answer".
 - **Not this:** delivering after the answer. On real Lambda the container
   stops running after the answer, and the outbox result would be written
-  after the request, beside the next request's store calls.
-- **Done when:** kit tests cover the deadline; a directory test shows that a
-  person in 3 domains with a slow subscriber is answered in about 3 s;
+  after the request, beside the next request's store calls. Nor "all store
+  work first, pushes last": the save after the pushes records delivered,
+  retry and dead-letter, and without it every event would be pushed again.
+- **Done when:** kit tests cover the deadline and the per-push limit; a
+  directory test shows that a person in 3 domains with a slow subscriber is
+  answered in about 3 s; a relay test shows that a document with three slow
+  subscribers is answered in about 3 s and keeps the rest pending;
   `scripts/kit-sync.sh --check` passes.
 
 ### K26. Sign-in hint contrast, sign-in focus and a real light mode in the responsive tests (backlog, one small session, about 5 hours)
@@ -2970,6 +2992,45 @@ fixes in one session, part 1 first because it is an accessibility defect.
   after a wrong sign-in the focus, value and caret stay in the username
   field; the responsive "light" runs really run in light mode on a Mac in
   dark mode, and both suites pass in both modes.
+
+### K27. No in-function @Schedule workers in the Lambda profile (Mesail release blocker, one small session, about 2 hours)
+Found by K22 phase 2, try 1 (2026-11-21). The apps' `@Schedule` workers in
+`server/workers/` DO run inside the Floci Lambda containers. directory's
+outbox-relay worker started 43 s after the server was ready, fetched a
+service token and the keys through the router, then called its own route on
+the local origin, without going through the router. The Floci scheduler
+calls the same routes through the router. So in Lambda form every job runs
+twice, and the in-function call skips the router's one-request-at-a-time
+gate for FYLO-owning functions, so it can overlap routed requests in the
+same FYLO app (ADR 0004: one writer). `deploy/floci/README.md` says the
+opposite ("In Lambda form no `@Schedule` worker runs"). TACHYON's option B
+(store deadline counts only store time) does not fix this.
+- **Builds:** when `YON_PROFILE` is `lambda`, every worker of the Lambda
+  apps (channels, devicebox x2, directory x2, mail-in, mail-out, messaging
+  x2, notify) returns at once, before any token fetch, HTTP call or store
+  call. Native, test and `container` profiles behave as today. If TACHYON
+  has a per-profile setting that stops `ty start` from running workers, use
+  that instead of code in each app. Otherwise use one shared guard per app or
+  in `kit/`, never about 10 copied lines in 11 files.
+- **realtime** (a container, `YON_PROFILE=container`, sweep every 15 s) keeps
+  its worker in this slice. The session checks whether the router's
+  single-writer gate covers realtime, and if it does, it proposes a
+  follow-up.
+- **Docs:** `deploy/floci/README.md` and EVENTS.md section 4 item 2 match
+  the code. In Lambda form, mail-out's delivery and notify's jobs move from
+  their workers' 30 s to the scheduler's 60 s ticks, with the scheduler's
+  `more: true` repeats.
+- **Done when:** tests prove that no worker makes a call with
+  `YON_PROFILE=lambda`, and that native, unset and `container` still call
+  their routes. A Floci run shows no in-function relay call (no extra
+  `service-token`/`jwks` pair at the workers' first-run times) and the
+  scheduler's calls still working. With `datasource.logcalls` on (the
+  TAC-ST2 `ty`) and the scheduler stopped, no store call appears in
+  directory at ready + 43 s or ready + 88 s. K22 confirmed the bug by that
+  timing (phase 2 tries 1 and 2: store calls at ready + 43.04 s and
+  + 88.02 s, a fylo close at ready + 48.0 s, and no relay or removals line in
+  the router log). A native run still shows the workers.
+  Brief: `k27-brief.md` in the MESAIL Build Coordinator's notes.
 
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 

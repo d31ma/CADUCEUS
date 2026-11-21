@@ -410,7 +410,7 @@ keeps its row, marked "retired".
 | MS5002 | realtime | 400 | `invalid_request` | the kind is socket or stream | the gateway connects a connection whose `kind` is not `socket` or `stream` (field `kind`) |
 | MS5003 | realtime | 400 | `invalid_request` | unknown message type | a client message whose `type` is not `auth`, `ticket`, `ping`, `typing`, `presence`, `signal`, `pairing.open`, `pairing.join`, `call.create`, `call.join`, `call.ring`, `call.ring.end` or `call.leave` (field `type`) |
 | MS5004 | realtime | 400 | `invalid_request` | a conversation id is required | a `typing` message with no `conversationId` (field `conversationId`) |
-| MS5005 | realtime | 400 | `invalid_request` | must name 1 to 100 members | `GET /presence` with no `memberIds` or more than 100 (field `memberIds`) |
+| MS5005 | realtime | 400 | `invalid_request` | must name 1 to 100 members | `GET /presence` with an empty `memberIds` or more than 100 (field `memberIds`); a request with no `memberIds` at all is refused by TACHYON before the controller, not with this number |
 | MS5006 | realtime | 400 | `invalid_request` | must be an RFC 3339 time | the sweep asked for presence due at a time that is not RFC 3339 (field `now`); the sweep route answers it as MS5024 |
 | MS5007 | realtime | 400 | `invalid_request` | must be active, idle or dnd | a presence `state` that is not `active`, `idle` or `dnd` (field `state`) |
 | MS5008 | realtime | 400 | `invalid_request` | must be an RFC 3339 time in the future | `dnd` with a `doNotDisturbUntil` that is missing or not in the future (field `doNotDisturbUntil`) |

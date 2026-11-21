@@ -1912,6 +1912,55 @@ Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
   OP2.
 - **Done when:** `Smtp_test.go` runs (not skips) and passes in the Floci
   run; `scripts/floci/down.sh` removes the new container.
+- **Also builds, the seed retry** (OP7 follow-up and K19, decided
+  2026-11-15): `seed person <name>` retries a non-2xx answer up to 3 times,
+  5 s apart, and logs each try with its answer, error number and time (the
+  output K19 added to `mesail_directory_call`), for example `seed person
+  operator: 503 ... number=MS1048, retry 1 of 3`. The warning stays when
+  every try fails. A retry must never hide the cause.
+- **Also builds, capture before retry** (FYLO's plan after K19, approved by
+  the FYLO Build Coordinator): when a FYLO app answers MS1048 (store over
+  5 s) or another store-unavailable number, the scripts save the state
+  BEFORE the first retry or any other call to that app:
+  1. `docker compose stop` (never `rm`) the scheduler services;
+  2. into `<log dir>/capture-<time>/`: the app's containers
+     (`docker ps -a --filter name=floci-aws-mesail-<service>`), the root
+     owner files `.<root>.fylo-root-owner.lock*` from `/mnt/data`, and the
+     whole root as a tar, read through a one-shot container that mounts the
+     app's EFS volume READ-ONLY (the volume is found as OPERATIONS.md
+     describes for the blob folder);
+  3. time `fylo` on a scratch copy of the root (`/mnt/data/capture-<time>`,
+     with the owner file under the copy's name) with no time limit: the
+     same `fylo` binary (a one-shot container from the app's image), the
+     same profile (`efs-sidecar-v1`, or `--exclusive-root` if the app uses
+     it), the same encryption key passed as the stack passes it (never
+     printed, logged or stored), the same root layout, on Linux ext4 in the
+     dev host; time start plus handshake apart from the failed request's
+     real store steps in order (for the directory seed: read `local-parts`,
+     write `local-parts`, find in `people`, write `people`); write the times
+     and fylo's stderr to `timing.txt`; then remove only the scratch copy;
+  4. only then start the scheduler again and retry.
+  The tar stays on the Mac until FYLO says it can go, and the run log names
+  the capture folder.
+- **Also builds, a fylo trace wrapper** in the Floci test image only,
+  behind a build argument that is off by default (for example
+  `MESAIL_FYLO_TRACE=1`), never in an image for kestrel or production: a
+  shell wrapper in place of `fylo` (the real binary renamed) that writes
+  one line with the UTC start time, the pid and the subcommand (never the
+  arguments or the environment), then sends only fylo's stderr to
+  `/tmp/fylo-trace-<pid>.log` in the container (a timestamp helper on a
+  pipe is fine), and ends with `exec` into the real `fylo`, so it keeps
+  fylo's pid. stdin and stdout stay untouched (they carry the `exec --loop`
+  protocol). The `exec` is required: TACHYON stops a timed-out store call
+  with SIGKILL, and a wrapper that ran fylo as a child would die alone and
+  leave fylo holding the root. The capture copies these logs out with
+  `docker cp` before the container goes away.
+- **Also owns, for these:** `scripts/floci/**` (retry and capture) and the
+  Floci test image's `fylo` install (the wrapper).
+- **Also done when:** a forced MS1048 (a fake answer in a script test, or
+  a real one) produces the capture folder before the first retry; each
+  retry is logged with its number; with the build argument on, a Floci run
+  writes one trace line per `fylo` start.
 
 OP5 (an offline build bundle) is dropped: the owner decided that builds
 may download pinned parts (SPEC Q20).

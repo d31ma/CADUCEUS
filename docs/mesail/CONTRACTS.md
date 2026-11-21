@@ -895,7 +895,7 @@ Gateway WebSocket API. The other routes are the `realtime` Yon app.
 | `GET /api/v1/realtime/stream?ticket=` (event stream, gateway) | single-use ticket | - | `data:` lines of `RealtimeEvent` |
 | `POST /api/v1/realtime/tickets` | SignedIn | - | `Ticket{ticket, expiresAt}` (single use, 30 seconds) |
 | `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, doNotDisturbUntil?}` | `204` |
-| `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
+| `GET /api/v1/realtime/presence?memberIds=` | SignedIn | `memberIds` required: 1 to 100 member ids, comma-separated | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
 | `GET /api/v1/realtime/turn` | SignedIn | - | `200 TurnCredentials{urls[], username, credential, expiresAt}` (G3); `503 unavailable` when no TURN relay is set |
 | `POST /api/v1/realtime/events` | Service (the envelope's domain) | `events.Envelope` | `EventReceipt{eventId, status}` |
 | `GET /api/v1/realtime/calls/keys` | Public | - | `CallKeys{keys[]}`, a JWKS of `CallKey{kty: EC, kid, alg: ES256, use: sig, crv: P-256, x, y}` (the current call key, then the previous one during a rotation); `503 unavailable` (MS5042) when no call key is set (from G11) |

@@ -35,6 +35,7 @@ func fyloBinary(t *testing.T) string {
 func newFyloStorage(t *testing.T) *fyloStorage {
 	t.Helper()
 	command := exec.Command(fyloBinary(t), "exec", "--loop", "--root", t.TempDir())
+	command.Env = append(os.Environ(), "FYLO_ALLOW_SYSTEM_DISK=1")
 	input, err := command.StdinPipe()
 	if err != nil {
 		t.Fatal(err)

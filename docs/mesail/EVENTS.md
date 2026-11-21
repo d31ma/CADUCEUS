@@ -247,7 +247,18 @@ outbound delivery queue, retries, email summaries, cleanup):
      origin. The worker holds no logic beyond that call.
    - **Lambda (Floci):** the local scheduler calls the same
      route through the gateway with a service token (slice P1 owns the
-     schedules and the small trigger that fetches the token).
+     schedules and the small trigger that fetches the token). It is the
+     only caller there: `ty start` still starts the `@Schedule` workers
+     inside each function, so every worker of a Lambda app runs its work
+     through `kit/scheduling` `WorkerSwitch`, and the Lambda profile
+     (`deploy/lambda/write-profile.sh`) sets `"workers": {"enabled": false}`,
+     which makes the worker return before any call (slice K27). Otherwise
+     each job would run twice, and the worker's call on the local origin
+     would skip the router's one-writer gate. So in Lambda form mail-out's
+     delivery and notify's jobs move from their workers' 30 s to the
+     scheduler's 60 s ticks (with the `more: true` repeats of item 5).
+     realtime runs as a container, not a Lambda, and keeps its 15 s
+     worker.
 3. **Drain on write** stays: a producing route calls `RelayDocument` right
    after its own write, so most events leave within the same request; the
    schedule only sweeps what is left. A push to a FYLO-owning service that

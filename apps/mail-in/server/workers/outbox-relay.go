@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/mailin"
+	"mesail.dev/packages/scheduling"
 	"mesail.dev/packages/transport"
 )
 
@@ -14,6 +15,10 @@ import (
 type Handler struct{}
 
 func (handler Handler) POST() {
+	scheduling.WorkerSwitch{ApplicationJson: os.Getenv("YON_APPLICATION_JSON")}.Run(handler.call)
+}
+
+func (handler Handler) call() {
 	var snapshot struct {
 		Yon struct {
 			Server struct {

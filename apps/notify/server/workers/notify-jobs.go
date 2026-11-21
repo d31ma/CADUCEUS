@@ -1,9 +1,11 @@
 import (
 	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/scheduling"
 	"mesail.dev/packages/transport"
 )
 
@@ -11,6 +13,10 @@ import (
 type Handler struct{}
 
 func (handler Handler) POST() {
+	scheduling.WorkerSwitch{ApplicationJson: os.Getenv("YON_APPLICATION_JSON")}.Run(handler.call)
+}
+
+func (handler Handler) call() {
 	authorization, failure := oidc.ServiceTokensFactory{}.Configured().Authorization(oidc.InstallWide{}.DomainId())
 	handler.post(handler.base()+"/jobs/run", authorization, failure)
 	handler.post(handler.base()+"/outbox/relay", authorization, failure)

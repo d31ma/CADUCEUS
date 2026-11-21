@@ -18,7 +18,7 @@ datasource_env() {
 
 main() {
   app_root="$1" service="$2" fylo="$3"
-  printf '{ "server": { "host": "127.0.0.1" } }\n' > "$app_root/server/application-lambda.json"
+  printf '{ "server": { "host": "127.0.0.1" }, "workers": { "enabled": false } }\n' > "$app_root/server/application-lambda.json"
   datasource_env "$fylo" "$service" > "$app_root/.env"
   cat "$app_root/server/application-lambda.json" "$app_root/.env" >&2
   data_root "$fylo" "$service"

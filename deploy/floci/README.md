@@ -599,7 +599,24 @@ dev host and removes it with `MESAIL_VM=colima`. Production SMTP
 
 ### Scheduler (Floci)
 
-In Lambda form no `@Schedule` worker runs, so the `scheduler` container
+In Lambda form the scheduler is the only caller of the scheduled routes.
+`ty start` still starts every `@Schedule` worker in a Lambda function (TACHYON
+26.46.02 has no setting to stop them), so the Lambda profile turns them off
+(slice K27): `deploy/lambda/write-profile.sh` writes
+`"workers": {"enabled": false}` into `server/application-lambda.json`, and
+each worker of a Lambda app runs its work through `kit/scheduling`
+`WorkerSwitch`, which reads that setting from `YON_APPLICATION_JSON` and
+returns at once, before any token fetch, HTTP call or store call. (A handler
+cannot read `YON_PROFILE` itself: TACHYON reserves that name and starts
+handlers with a cleared environment.) Before K27 these workers called their
+routes on the local origin, so each job ran twice and the worker's call
+skipped the router's one-writer gate. Native `ty start`, the tests and the
+`container` profile (realtime) keep their workers. Because of this,
+mail-out's delivery and notify's jobs run at the scheduler's 60 s ticks in
+Lambda form, not every 30 s as their workers do, with the `more: true`
+repeats below.
+
+The `scheduler` container
 (`Dockerfile` target `scheduler`, `deploy/lambda/scheduler.sh` on a pinned
 curl image) calls every route in `stack.json` `schedules` through the router
 every `scheduleSeconds` (60). Its token is an install-wide service token from

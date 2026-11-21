@@ -1,6 +1,7 @@
 import (
 	"os"
 
+	"mesail.dev/packages/scheduling"
 	"mesail.dev/packages/trigger"
 )
 
@@ -8,7 +9,8 @@ import (
 type Handler struct{}
 
 func (handler Handler) POST() {
-	trigger.InstallWideJob{Path: handler.path()}.Run(os.Getenv("YON_APPLICATION_JSON"))
+	settings := os.Getenv("YON_APPLICATION_JSON")
+	scheduling.WorkerSwitch{ApplicationJson: settings}.Run(func() { trigger.InstallWideJob{Path: handler.path()}.Run(settings) })
 }
 
 func (Handler) path() string {

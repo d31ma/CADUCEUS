@@ -2,13 +2,15 @@ import (
 	"os"
 
 	"mesail.dev/packages/devicebox"
+	"mesail.dev/packages/scheduling"
 )
 
 // @Schedule({"fixedDelaySeconds":60,"initialDelaySeconds":58})
 type Handler struct{}
 
 func (handler Handler) POST() {
-	devicebox.ScheduledCall{Path: handler.path()}.Run(os.Getenv("YON_APPLICATION_JSON"))
+	settings := os.Getenv("YON_APPLICATION_JSON")
+	scheduling.WorkerSwitch{ApplicationJson: settings}.Run(func() { devicebox.ScheduledCall{Path: handler.path()}.Run(settings) })
 }
 
 func (Handler) path() string {

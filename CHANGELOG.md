@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- No `@Schedule` worker calls anything in the Lambda profile (slice K27, a
+  release blocker). K22 showed that `ty start` runs the workers inside the
+  Lambda functions: directory's outbox relay and removals called their own
+  routes on the local origin 43 s and 88 s after start, while the Floci
+  scheduler called the same routes through the router. So each job ran
+  twice, and the in-function call skipped the router's one-writer gate for
+  FYLO-owning functions. Now `deploy/lambda/write-profile.sh` writes
+  `"workers": {"enabled": false}` into `application-lambda.json`, and the
+  ten workers of the Lambda apps (channels, devicebox x2, directory x2,
+  mail-in, mail-out, messaging x2, notify) run their work through the new
+  kit package `scheduling` (`WorkerSwitch`), which returns at once when the
+  setting is `false`. Native `ty start`, the tests and realtime's
+  `container` profile run the workers as before. In Lambda form mail-out's
+  delivery and notify's jobs now run at the scheduler's 60 s ticks instead
+  of every 30 s. `tests/workers` checks the profile file and that every
+  Lambda worker uses the switch.
+
 - The FYLO test image moved from ATLAS to the local HANGAR SSD (slice K25).
   ATLAS holds production data only; the image went read-only twice over
   NFS (2026-11-16 and 2026-11-21) and broke the nightly runs.

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/scheduling"
 	"mesail.dev/packages/transport"
 )
 
@@ -16,6 +17,10 @@ type Handler struct{}
 func (Handler) timeout() time.Duration { return 60 * time.Second }
 
 func (handler Handler) POST() {
+	scheduling.WorkerSwitch{ApplicationJson: os.Getenv("YON_APPLICATION_JSON")}.Run(handler.call)
+}
+
+func (handler Handler) call() {
 	var snapshot struct {
 		Yon struct {
 			Server struct {

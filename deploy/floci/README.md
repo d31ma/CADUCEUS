@@ -262,7 +262,9 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 - `YON_EGRESS_ENFORCEMENT=proxy`, as in the Lambda images.
 - The FYLO root is on the named volume `mesail-realtime-data`, mounted at
   `/data`. Our scripts never remove it, so data stays between runs (in the
-  dev host, Docker volumes live on the ATLAS disk).
+  dev host, Docker volumes live on the VM's data disk,
+  `/Volumes/HANGAR/mesail/data/mesail-data.raw` since 2026-11-21; it was on
+  ATLAS before, and ATLAS now holds production data only).
 - No published ports: the router reaches it on the network `backend`.
 - Compose settings: `MESAIL_REALTIME_GATEWAY_SECRET` (generated for each
   run), `MESAIL_REALTIME_ORIGINS` = `MESAIL_PUBLIC_URL`, and

@@ -12,10 +12,17 @@ fast-forward push to `develop`. A slice owns the files listed for it and
 edits nothing else.
 
 Paths (renamed 2026-11-15, MSL-REN): the repository is `d31ma/MESAIL`, the
-HAVEN checkout `/Volumes/HAVEN/Repositories/DELMA/MESAIL`, the shared clone
+HAVEN checkout `/Volumes/HAVEN/Repositories/DELMA/MESAIL` (no reads, writes
+or git there during development: since 2026-11-21 HAVEN and ATLAS are for
+production only, and testing, builds and worktrees use ANVIL or HANGAR),
+the shared clone
 `~/Developer/AnvilTargets/git/MESAIL` (a full clone; never `git gc` or
-`git worktree prune` it), worktrees `~/Developer/Worktrees/MESAIL/<name>`
-and logs `~/Library/Logs/local/MESAIL`. The old `CADUCEUS` paths are links
+`git worktree prune` it), worktrees `/Volumes/HANGAR/work/MESAIL/<name>`
+(since 2026-11-21, Platform's rule; `~/Developer/Worktrees/MESAIL` before:
+the git data stays in the shared clone, build output goes to
+`~/Developer/AnvilTargets/targets/<name>`, a branch is pushed at every step
+and at least hourly, a worktree is removed at its merge, and all Mesail
+worktrees together stay under 15 GiB) and logs `~/Library/Logs/local/MESAIL`. The old `CADUCEUS` paths are links
 to these. The lock name `caduceus-build` did not change. Owned file sets never overlap, so slices of the same
 wave run at the same time.
 
@@ -87,9 +94,12 @@ wave run at the same time.
    small Go interfaces that the role files fill in, so it is testable
    without Tachyon. Design this way from the start (wave 2 slices M3, R1,
    N1 included).
-9. **FYLO on ATLAS (every FYLO-owning slice).** Live roots are on ATLAS in
-   Lambda form, where a write takes about 109 ms with stalls up to 11 s
-   (ADR 0004 section 4). So: at most 25 FYLO writes and 20 seconds of work
+9. **FYLO on a slow network disk (every FYLO-owning slice).** In
+   production on kestrel, live roots in Lambda form are on ATLAS today (the
+   open decision in "Open before the production release"), where a write
+   takes about 109 ms with stalls up to 11 s (ADR 0004 section 4). The dev
+   host's data disk was on ATLAS too until 2026-11-21; it is on HANGAR now,
+   but the limits below stay, because they protect production. So: at most 25 FYLO writes and 20 seconds of work
    per request or job call (answer `more: true`; the trigger calls again
    within its tick, EVENTS.md section 4 item 5); every write idempotent; slow work through the outbox; callers
    use a 30 s timeout and at most 3 retries with backoff. **Services on the
@@ -2764,7 +2774,8 @@ for every gate. Expected saving: about 4.5 hours a day.
   - **The nightly full run** (built by Platform, PLAT-1, 2026-11-14):
     Platform's one nightly scheduler for all products, at 03:00, fetches
     `origin/develop` in the shared clone, makes a fresh detached worktree
-    `~/Developer/Worktrees/MESAIL/nightly-<date>`, runs
+    `nightly-<date>` (in Platform's worktree folder, which Platform sets),
+    runs
     `MAC_HEAVY_COORDINATOR=caduceus-build mac-heavy --owner mesail-nightly
     -- env MESAIL_SLICE=nightly LOG_ROOT=<log dir> scripts/gates.sh
     $MESAIL_GATES_ARGS` through jobq, and removes the worktree. The log dir
@@ -3072,6 +3083,25 @@ warm-up; C later).
   - one Floci run on the dev host after the page cache was cleared (ask mesail-devhost how: a VM restart, or dropping the guest's caches) shows the warm-up line, and with `datasource.logcalls` on (the TAC-ST2 `ty`), the first store call's `wait_ms` is far under 5 s;
   - `deploy/floci/README.md` and OPERATIONS.md describe it, including the `MESAIL_FYLO_WARM*` settings.
   - the first call is NOT SLOWER with the warm-up than without it: two cold runs after a cache clear, one with `MESAIL_FYLO_WARM=0` and one with the warm-up on, each recording the first store call's `wait_ms` and `call_ms` and the time to the first answer. If the warm-up run is slower, try a warm-up that starts after the first request, or one that reads with a lower I/O priority (`ionice -c3`), before giving up on the background design.
+
+### K29. A neutral name for the FYLO test image mount point (backlog, about 1-2 hours)
+Since K25 the FYLO test image is on the HANGAR SSD
+(`/Volumes/HANGAR/mesail-test/mesail-fylo-test.sparsebundle`), but its mount
+point is still called `~/Developer/AtlasFylo/mesail`. The name is now wrong
+(no development data is on ATLAS), and it invites a mistake under the rule
+of 2026-11-21 (HAVEN and ATLAS for production only).
+- **Builds:** a neutral mount point, for example
+  `~/Developer/MesailTestImage`, in `scripts/fylo-image.sh` (the default
+  `MESAIL_FYLO_IMAGE_MOUNT`), `scripts/gates.sh`, `scripts/native/run-all.sh`,
+  `deploy/floci/README.md`, `deploy/keycloak/README.md` (the dev Keycloak's
+  `MESAIL_KEYCLOAK_DATA`), the two `.env.example` files, SLICES.md and
+  ADR 0004. Keep a link at the old path for one week, because running
+  sessions and `.env` files in old worktrees use it, then remove the link.
+- **When:** while no gate uses the image (ask the coordinator), because
+  the image is detached once and attached at the new mount point.
+- **Done when:** `scripts/fylo-image_test.sh` and one app gate pass at the
+  new mount point; the old path still works through the link; nothing in
+  the repository names `AtlasFylo` except the link's removal date.
 
 ## Open before the production release
 Everything that must be done or decided before Mesail's first production

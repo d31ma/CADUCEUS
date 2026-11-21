@@ -499,7 +499,9 @@ already combines DuVay and Tailwind (`website/client/manifest.json`,
   natively when a test needs a real token.
 - **This Mac, integration:** every Yon service as a Lambda in Floci inside
   the `mesail` Lima VM, with EFS volumes on an ext4 data disk whose raw file
-  is on ATLAS. Linux VMs are used only for this run, Lambda image builds and
+  is on the HANGAR SSD (`/Volumes/HANGAR/mesail/data/mesail-data.raw`; on
+  ATLAS until 2026-11-21, when the user kept ATLAS and HAVEN for production
+  only). Linux VMs are used only for this run, Lambda image builds and
   workflow dry runs, never as a per-slice gate.
 - **kestrel (deployment, later):** the same images through PaaS, like
   FitNest.

@@ -3032,6 +3032,45 @@ opposite ("In Lambda form no `@Schedule` worker runs"). TACHYON's option B
   the router log). A native run still shows the workers.
   Brief: `k27-brief.md` in the MESAIL Build Coordinator's notes.
 
+### K28. Warm-up read of every FYLO root when a container starts (backlog, one small session, about 3 hours)
+Found by K22 phase 2, try 4 (2026-11-21): the first store call in a fresh
+container read hundreds of small FYLO files that were not in the VM's page
+cache. The data disk is a raw file on ATLAS over NFS (about 10 ms per
+read), so the call passed TACHYON's 5 s and answered MS1048. The page cache
+belongs to the VM, so this happens after a VM start, or when memory
+pressure pushes the files out. It is useful for the dev host, and as a bridge in
+production until the user decides where production FYLO data lives
+(`production-fylo-disk-note.md` in the MESAIL Build Coordinator's notes:
+A local disk with backups to ATLAS, recommended; B ATLAS with this
+warm-up; C later).
+- **Builds:** a script `deploy/lambda/fylo-warm.sh <root>`. Both start
+  scripts (`deploy/lambda/start.sh`, `deploy/lambda/realtime-start.sh`) start
+  it IN THE BACKGROUND right before `exec ty start`, so it never delays the
+  start. It reads every file of the root once, and the owner files beside
+  it, for example `find <root> -type f -exec cat {} + > /dev/null`, under
+  `timeout` with `MESAIL_FYLO_WARM_SECONDS` (default 60). It writes one line
+  to the container log: the UTC time, the root, files, bytes, seconds, and
+  `done` or `stopped at the limit`. `MESAIL_FYLO_WARM=0` turns it off. It
+  is skipped when the root does not exist, and when the trace build's start
+  snapshot (`MESAIL_FYLO_TRACE=1`) already read the root.
+- **Must not:**
+  - write anything, in the root, beside it or anywhere on the data disk (it only reads, and sends file contents to `/dev/null`);
+  - take or check FYLO locks;
+  - keep files open after the time limit;
+  - delay the start: `ty start`, its health route and the first request never wait for it;
+  - add start-up time to the gates or the native runner (they do not use these start scripts; keep it that way), or to the Floci tests (it runs in the background).
+  If the background process outlives the start script, check that it does not stay as a zombie under `ty` (start it with `setsid`, or show that TACHYON reaps it).
+- **Not this:** a warm-up that blocks the start (the Lambda adapter and the
+  router would wait, and the time grows with the data), or `vmtouch -l`
+  (it locks pages in memory).
+- **Also possible, outside this repo:** a warm-up after the dev host VM
+  boots, in `mesail-devhost` (Platform's and mesail-devhost's area). Propose
+  it; do not build it here.
+- **Done when:**
+  - a script test with a temporary folder shows the log line, the time limit and the off switch, and no file changed (checksums before and after);
+  - one Floci run on the dev host after the page cache was cleared (ask mesail-devhost how: a VM restart, or dropping the guest's caches) shows the warm-up line, and with `datasource.logcalls` on (the TAC-ST2 `ty`), the first store call's `wait_ms` is far under 5 s;
+  - `deploy/floci/README.md` and OPERATIONS.md describe it, including the `MESAIL_FYLO_WARM*` settings.
+
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 
 Wave 10 (J0 to J5: Floci SQS and SNS for events, EventBridge Scheduler

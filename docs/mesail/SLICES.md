@@ -1922,14 +1922,20 @@ Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
   the FYLO Build Coordinator): when a FYLO app answers MS1048 (store over
   5 s) or another store-unavailable number, the scripts save the state
   BEFORE the first retry or any other call to that app:
-  1. `docker compose stop` (never `rm`) the scheduler services;
+  1. `docker compose stop` (never `rm`) the scheduler services, and at once
+     `docker stop` (never `rm`) the app's container, so no more store calls
+     reach that root;
   2. into `<log dir>/capture-<time>/`: the app's containers
      (`docker ps -a --filter name=floci-aws-mesail-<service>`), the root
      owner files `.<root>.fylo-root-owner.lock*` from `/mnt/data`, and the
      whole root as a tar, read through a one-shot container that mounts the
      app's EFS volume READ-ONLY (the volume is found as OPERATIONS.md
-     describes for the blob folder);
+     describes for the blob folder), saved as `root-after.tar`; with the
+     build argument on, also the start snapshot and the trace logs from
+     the stopped container with `docker cp` (see the next point);
   3. time `fylo` on a scratch copy of the root (`/mnt/data/capture-<time>`,
+     made from the start snapshot when there is one, else from
+     `root-after.tar`; the times name which one),
      with the owner file under the copy's name) with no time limit: the
      same `fylo` binary (a one-shot container from the app's image), the
      same profile (`efs-sidecar-v1`, or `--exclusive-root` if the app uses
@@ -1940,8 +1946,8 @@ Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
      write `local-parts`, find in `people`, write `people`); write the times
      and fylo's stderr to `timing.txt`; then remove only the scratch copy;
   4. only then start the scheduler again and retry.
-  The tar stays on the Mac until FYLO says it can go, and the run log names
-  the capture folder.
+  The tars stay on the Mac until FYLO says they can go, and the run log
+  names the capture folder.
 - **Also builds, a fylo trace wrapper** in the Floci test image only,
   behind a build argument that is off by default (for example
   `MESAIL_FYLO_TRACE=1`), never in an image for kestrel or production: a
@@ -1955,12 +1961,39 @@ Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
   with SIGKILL, and a wrapper that ran fylo as a child would die alone and
   leave fylo holding the root. The capture copies these logs out with
   `docker cp` before the container goes away.
+- **Also builds, a start snapshot of the root** (decided 2026-11-21 after
+  K20; the same build argument, test image only). K20's two Floci runs
+  showed that a copy taken after the 503 is too late: TACHYON kills `fylo`
+  at the 5 s limit, and the app's next store call in the SAME request
+  starts a new `fylo` at once (K20 run 2: the new process at 10:12:04, the
+  503 at 10:12:04.57). That new process can finish the recovery before any
+  script sees the 503, so the slow state is gone. So, with the build
+  argument on, the container's start script, BEFORE it starts the app
+  process (so no `fylo` of this container runs yet), writes a tar of the
+  root and its owner files `.<root>.fylo-root-owner.lock*` to
+  `/tmp/fylo-root-at-start.tar` in the container, reading only, and writes
+  one line with the UTC time, the size and the seconds it took to
+  `/tmp/fylo-trace-start.log`. It skips the copy, and says so in that line,
+  when the root is over 200 MB. The copy costs nothing inside any store
+  call, so it does not change what it measures. Two other ways were
+  refused: copying when a `fylo` start passes a few seconds copies a root
+  that the recovering `fylo` is writing (a torn copy, and the
+  never-copy-while-it-writes rule of the capture); and stopping the
+  container on the first MS1048 alone is too late, for the reason above
+  (step 1 still does it, to keep the state after the restart and the logs).
+  If an earlier `fylo` start of the same container (a health call, an
+  outbox sweep) came before the slow call, the trace shows it, and FYLO
+  decides whether the start snapshot is still the state the slow call saw.
 - **Also owns, for these:** `scripts/floci/**` (retry and capture) and the
-  Floci test image's `fylo` install (the wrapper).
+  Floci test image's `fylo` install and start script (the wrapper and the
+  start snapshot).
 - **Also done when:** a forced MS1048 (a fake answer in a script test, or
   a real one) produces the capture folder before the first retry; each
   retry is logged with its number; with the build argument on, a Floci run
-  writes one trace line per `fylo` start.
+  writes one trace line per `fylo` start, each app container holds
+  `/tmp/fylo-root-at-start.tar` whose start line comes before its first
+  `fylo` line, and a forced MS1048's capture folder holds that snapshot and
+  times `fylo` on it.
 
 OP5 (an offline build bundle) is dropped: the owner decided that builds
 may download pinned parts (SPEC Q20).

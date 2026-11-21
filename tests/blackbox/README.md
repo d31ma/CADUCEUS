@@ -83,7 +83,12 @@ Prefixes are never reused (SPEC Q5). Since 2026-11-12 every test removes
 the domains and the new people it made when it ends (`Cleanup.go`: the
 Operator deletes them; the directory finishes in the background), so the
 dev stack does not grow with each run. `MESAIL_KEEP_TEST_DATA` (any value)
-keeps them, for debugging. The K3 load test's 200 members are not deleted
+keeps them, for debugging. A deleted person is never removed from the
+directory: `GET /api/v1/directory/people` keeps it with `state: deleted`
+(its prefix stays reserved, DOMAIN.md), so a test or tool that counts
+people skips that state (on the dev host on 2026-11-21, 150 of 652 people
+were deleted). To find people by name, use `?query=`; the route ignores
+other parameters such as `text` and then answers the whole list. The K3 load test's 200 members are not deleted
 one by one; removing their domain is enough. Wrong-password tests use new people, so the
 fixtures are never locked by brute-force detection. The tests that wait
 for a membership change allow 70 seconds.

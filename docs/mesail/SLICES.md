@@ -1984,16 +1984,27 @@ Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
   If an earlier `fylo` start of the same container (a health call, an
   outbox sweep) came before the slow call, the trace shows it, and FYLO
   decides whether the start snapshot is still the state the slow call saw.
-- **Also owns, for these:** `scripts/floci/**` (retry and capture) and the
-  Floci test image's `fylo` install and start script (the wrapper and the
-  start snapshot).
+- **Also builds, a higher sign-in limit for the Floci blackbox run**
+  (K20, 2026-11-21): K20's first Floci run sent 1068 sign-ins in one
+  minute and got 30 router 429s, because the test stack's limit is 1000
+  per minute per address (`MESAIL_ROUTER_RATE_LIMIT`, `docker-compose.yml`
+  default 1000). K20's second run with 3000 had no 429. `scripts/floci`
+  sets 3000 for the Floci test stack when the variable is not set, and
+  `deploy/floci/README.md` says so. The `docker-compose.yml` default
+  (1000), the native runner's 1000 and the production default (10,
+  OPERATIONS.md) stay as they are. Spacing the token refreshes instead was
+  not chosen: it slows every run, and the limit protects nothing in a
+  test stack.
+- **Also owns, for these:** `scripts/floci/**` (retry, capture and the
+  sign-in limit) and the Floci test image's `fylo` install and start
+  script (the wrapper and the start snapshot).
 - **Also done when:** a forced MS1048 (a fake answer in a script test, or
   a real one) produces the capture folder before the first retry; each
   retry is logged with its number; with the build argument on, a Floci run
   writes one trace line per `fylo` start, each app container holds
   `/tmp/fylo-root-at-start.tar` whose start line comes before its first
   `fylo` line, and a forced MS1048's capture folder holds that snapshot and
-  times `fylo` on it.
+  times `fylo` on it; a full Floci blackbox run has no router 429.
 
 OP5 (an offline build bundle) is dropped: the owner decided that builds
 may download pinned parts (SPEC Q20).

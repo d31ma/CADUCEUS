@@ -3071,6 +3071,24 @@ warm-up; C later).
   - a script test with a temporary folder shows the log line, the time limit and the off switch, and no file changed (checksums before and after);
   - one Floci run on the dev host after the page cache was cleared (ask mesail-devhost how: a VM restart, or dropping the guest's caches) shows the warm-up line, and with `datasource.logcalls` on (the TAC-ST2 `ty`), the first store call's `wait_ms` is far under 5 s;
   - `deploy/floci/README.md` and OPERATIONS.md describe it, including the `MESAIL_FYLO_WARM*` settings.
+  - the first call is NOT SLOWER with the warm-up than without it: two cold runs after a cache clear, one with `MESAIL_FYLO_WARM=0` and one with the warm-up on, each recording the first store call's `wait_ms` and `call_ms` and the time to the first answer. If the warm-up run is slower, try a warm-up that starts after the first request, or one that reads with a lower I/O priority (`ionice -c3`), before giving up on the background design.
+
+## Open before the production release
+Decisions that are open on purpose. Each one is raised through the hub
+before Mesail's first production release on kestrel; none of them blocks
+work on `develop` today. Release blockers for the code itself are marked
+in their slices (for example K27).
+- **Production FYLO data placement on kestrel: open** (the user,
+  2026-11-21: "Decide later"). Raise it through the hub before the
+  production release, with K22's numbers after TAC-ST2 and FYLO-CR1. ADR
+  0004 ("Where live roots live: on ATLAS") and ADR 0007 stay as they are
+  until then. The decision paper is `production-fylo-disk-note.md` in the
+  MESAIL Build Coordinator's notes. It covers where the data lives today
+  (ext4 inside the VM's raw disk on ATLAS over NFS), why that meets the
+  FYLO rule only by the letter (cold reads, writes, the `async` export),
+  and the options: a local disk on kestrel with backups to ATLAS, or ATLAS
+  with a warm-up read (K28).
+
 
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 

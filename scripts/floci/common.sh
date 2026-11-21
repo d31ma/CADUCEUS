@@ -29,6 +29,9 @@ mesail_load_settings() {
   export MESAIL_KEYCLOAK_URL="${MESAIL_KEYCLOAK_URL:-http://127.0.0.1:$MESAIL_KEYCLOAK_PORT/idp}"
   export MESAIL_ROUTER_URL="${MESAIL_ROUTER_URL:-http://127.0.0.1:$MESAIL_ROUTER_PORT}"
   export MESAIL_IMAGE_TAG="${MESAIL_IMAGE_TAG:-dev}"
+  export MESAIL_SMTP_PORT="${MESAIL_SMTP_PORT:-$(mesail_stack .smtp.port)}"
+  export MESAIL_ROUTER_RATE_LIMIT="${MESAIL_ROUTER_RATE_LIMIT:-$(mesail_stack .routerRateLimit)}"
+  export MESAIL_FYLO_TRACE="${MESAIL_FYLO_TRACE:-0}"
   export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 AWS_PAGER=""
   unset AWS_PROFILE AWS_SESSION_TOKEN
   mesail_log_dir > /dev/null
@@ -218,11 +221,64 @@ mesail_seed_domain() {
   echo "verify domain $domain: $(mesail_directory_call "$base" "$token" POST "/domains/$domain/verify")"
 }
 
+mesail_seed_retries() {
+  echo 3
+}
+
+mesail_seed_retry_seconds() {
+  echo 5
+}
+
+mesail_answer_number() {
+  sed -n 's/.* number=\([A-Z]*[0-9]*\).*/\1/p' <<< "$1"
+}
+
+mesail_store_unavailable() {
+  local service="$1" number="$2"
+  jq -e --arg service "$service" --arg number "$number" '(.storeUnavailable[$service] // []) | index($number) != null' \
+    "$(mesail_stack_file)" > /dev/null
+}
+
+mesail_capture_done_file() {
+  echo "$(mesail_log_dir)/capture-done-$1"
+}
+
+mesail_capture_before_retry() {
+  local service="$1" result="$2" number
+  number="$(mesail_answer_number "$result")"
+  if ! mesail_store_unavailable "$service" "$number"; then return 0; fi
+  if [ -e "$(mesail_capture_done_file "$service")" ]; then echo "capture: $service was captured already in this run"; return 0; fi
+  touch "$(mesail_capture_done_file "$service")"
+  "$(mesail_root)/scripts/floci/capture.sh" "$service" "$number" || echo "warning: the capture of $service failed (see above); retrying anyway"
+}
+
+mesail_seed_once() {
+  local base="$1" token="$2" username="$3"
+  echo "$(mesail_directory_call "$base" "$token" POST /people/seed "$(mesail_person_seed "$username")") at=$(date -u +%H:%M:%SZ)"
+}
+
+mesail_seeded() {
+  [ "${1%% *}" = 200 ]
+}
+
 mesail_seed_person() {
-  local base="$1" token="$2" username="$3" result
-  result="$(mesail_directory_call "$base" "$token" POST /people/seed "$(mesail_person_seed "$username")")"
-  echo "seed person $username: $result"
-  if [ "${result%% *}" != 200 ]; then echo "warning: the directory did not seed $username, so its tests fail"; fi
+  local base="$1" token="$2" username="$3" result try=0
+  result="$(mesail_seed_once "$base" "$token" "$username")"
+  while ! mesail_seeded "$result" && [ "$try" -lt "$(mesail_seed_retries)" ]; do
+    try=$((try + 1))
+    echo "seed person $username: $result, retry $try of $(mesail_seed_retries) in $(mesail_seed_retry_seconds) s"
+    mesail_capture_before_retry directory "$result"
+    sleep "$(mesail_seed_retry_seconds)"
+    token="$(mesail_service_token "$base" || echo "$token")"
+    result="$(mesail_seed_once "$base" "$token" "$username")"
+  done
+  echo "seed person $username: $result$(mesail_retry_note "$try")"
+  if ! mesail_seeded "$result"; then echo "warning: the directory did not seed $username, so its tests fail"; fi
+}
+
+mesail_retry_note() {
+  if [ "$1" = 0 ]; then return 0; fi
+  echo " (after retry $1 of $(mesail_seed_retries))"
 }
 
 mesail_require_token() {
@@ -261,5 +317,5 @@ mesail_seed_directory() {
   mesail_require_token "operator token" "$operator" || return 1
   mesail_seed_domains "$base" "$operator"
   mesail_seed_pending_domains "$base" "$operator"
-  mesail_seed_people "$base" "$service"
+  mesail_seed_people "$base" "$(mesail_service_token "$base" || echo "$service")"
 }

@@ -4,6 +4,7 @@
 !kit/
 !edge/realtime/
 !edge/calls/
+!edge/smtp/
 **/.tachyon
 **/dist
 **/data

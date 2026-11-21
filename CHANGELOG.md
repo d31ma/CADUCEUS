@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- The Floci test stack runs the SMTP edge (slice OP8): `edge/smtp` gets a
+  `Dockerfile` target `smtp` and runs as the container `smtp` with the
+  shared blob folder as `MESAIL_RAW_STORE_DIR`, on `127.0.0.1:12525`, so
+  `tests/blackbox/Smtp_test.go` runs in the Floci run. The Floci scripts
+  set the router's sign-in limit to 3000 per minute (the compose default
+  stays 1000). The directory seed retries a failed call up to 3 times,
+  5 s apart, and logs each try with its error number. On a store-unavailable
+  number (for example MS1048) the scripts first capture the app's state
+  (`scripts/floci/capture.sh`: the root read only, the trace, and fylo
+  timed on a scratch copy with no 5 s limit). With the build argument
+  `MESAIL_FYLO_TRACE=1` (test images only, off by default) a `fylo` wrapper
+  logs each start and fylo's stderr in the container, and each container
+  keeps a tar of its root from before the app started.
+
 - Outbox sweeps take only due documents, oldest due first (slice K20).
   After a subscriber outage, documents waiting in backoff no longer fill
   the 25 places of a sweep: due retries behind them were held up to 900 s

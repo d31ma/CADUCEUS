@@ -68,6 +68,12 @@ RUN set -eu \
  && apt-get purge -y -q curl \
  && apt-get autoremove -y -q \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/* /var/log/apt /var/log/dpkg.log /tmp/*
+ARG MESAIL_FYLO_TRACE=0
+COPY --chmod=755 deploy/lambda/fylo-trace.sh /usr/local/lib/mesail/fylo-trace.sh
+COPY --chmod=755 deploy/lambda/fylo-start-snapshot.sh /usr/local/lib/mesail/fylo-start-snapshot.sh
+COPY --chmod=755 deploy/lambda/install-fylo-trace.sh /usr/local/lib/mesail/install-fylo-trace.sh
+RUN /usr/local/lib/mesail/install-fylo-trace.sh "${MESAIL_FYLO_TRACE}"
+ENV MESAIL_FYLO_TRACE=${MESAIL_FYLO_TRACE}
 
 FROM lambda-tools AS lambda
 ARG APP
@@ -143,6 +149,22 @@ ENV MESAIL_CALLS_LISTEN=0.0.0.0:8120 \
     MESAIL_CALLS_MEDIA_LISTEN=0.0.0.0:8121
 EXPOSE 8120 8121/udp
 ENTRYPOINT ["/mesail-calls"]
+
+FROM ${GOLANG_IMAGE} AS smtp-build
+WORKDIR /src/edge/smtp
+COPY kit /src/kit
+COPY edge/smtp/ ./
+RUN find . -name '*_test.go' -delete \
+ && GOTOOLCHAIN=local GOPROXY=off CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-smtp . \
+ && mkdir -p /out/tmp
+
+FROM scratch AS smtp
+COPY --from=smtp-build /out/mesail-smtp /mesail-smtp
+COPY --from=smtp-build --chown=10001:10001 /out/tmp /tmp
+USER 10001:10001
+ENV TMPDIR=/tmp
+EXPOSE 25
+ENTRYPOINT ["/mesail-smtp"]
 
 FROM ${GOLANG_IMAGE} AS realtime-gateway-build
 WORKDIR /src/edge/realtime

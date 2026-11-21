@@ -82,8 +82,20 @@ mount_blobs_on_router() {
   local profile
   profile="$(used_profile)"
   # shellcheck disable=SC2086
-  compose $profile --file "$(mesail_root)/deploy/floci/compose.blobs.yaml" up --detach --no-deps blobs-folder router
+  compose $profile --file "$(mesail_root)/deploy/floci/compose.blobs.yaml" up --detach --no-deps blobs-folder router smtp
   mesail_wait_for router 60 curl --fail --silent "$MESAIL_ROUTER_URL/_router/ready"
+}
+
+smtp_answers() {
+  "$(dirname "$0")/smtp-ready.sh" "127.0.0.1:$MESAIL_SMTP_PORT"
+}
+
+wait_for_smtp() {
+  if mesail_wait_for "the SMTP edge on 127.0.0.1:$MESAIL_SMTP_PORT" 60 smtp_answers; then
+    echo "127.0.0.1:$MESAIL_SMTP_PORT" > "$(mesail_log_dir)/smtp-address"
+    return 0
+  fi
+  echo "warning: the SMTP edge does not answer on 127.0.0.1:$MESAIL_SMTP_PORT, so Smtp_test.go skips (dev host: is the port forwarded?)"
 }
 
 main() {
@@ -94,8 +106,10 @@ main() {
   mesail_step blobs-engine check_engine
   MESAIL_BLOBS_VOLUME="$(blob_volume)"
   export MESAIL_BLOBS_VOLUME
-  echo "blob folder: volume $MESAIL_BLOBS_VOLUME, subpath blobs"
+  echo "$MESAIL_BLOBS_VOLUME" > "$(mesail_log_dir)/blobs-volume"
+  echo "blob folder: volume $MESAIL_BLOBS_VOLUME, subpath blobs (router /blobs, smtp MESAIL_RAW_STORE_DIR)"
   mesail_step blobs-router mount_blobs_on_router
+  mesail_step smtp-ready wait_for_smtp
 }
 
 main "$@"

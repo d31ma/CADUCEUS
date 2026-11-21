@@ -24,8 +24,12 @@ wait_for_service() {
   mesail_wait_for "$1 through the router" 180 mesail_service_answers "$MESAIL_ROUTER_URL" "$1"
 }
 
+smtp_address() {
+  cat "$(mesail_log_dir)/smtp-address" 2> /dev/null || true
+}
+
 go_blackbox() {
-  (cd "$(mesail_root)/tests/blackbox" && MESAIL_BASE_URL="$MESAIL_ROUTER_URL" \
+  (cd "$(mesail_root)/tests/blackbox" && MESAIL_BASE_URL="$MESAIL_ROUTER_URL" MESAIL_SMTP_ADDR="$(smtp_address)" \
     go test -tags blackbox -count=1 -v -run "$1" ./...)
 }
 

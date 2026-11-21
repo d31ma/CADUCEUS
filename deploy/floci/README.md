@@ -164,6 +164,9 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | `MESAIL_SKIP_BUILD=1` | Reuse the images that are already built. |
 | `MESAIL_WARMUP_SECONDS=<n>` | Before the tests, repeat the directory seed and one sign-in (`ana`) every 15 s until both pass, for up to `<n>` seconds (300 for slice K6's runs). A first FYLO call after a cold start can pass the 5 s store deadline until slice K10; a failure here is that known class, not a test result. Unset: seed once. |
 | `MESAIL_VM` | `mesail` (default, the dev host) or `colima`. |
+| `MESAIL_ROUTER_RATE_LIMIT` | The router's sign-ins per minute per address. The Floci scripts set 3000 (`stack.json` `routerRateLimit`) when it is not set: the blackbox suite can send over 1000 sign-ins in one minute (slice K20: 1068, 30 router 429s at 1000). The `docker-compose.yml` default (1000), the native runner (1000) and production (10, OPERATIONS.md) do not change. |
+| `MESAIL_SMTP_PORT` | The Mac port of the SMTP edge (default 12525, `stack.json` `smtp.port`). |
+| `MESAIL_FYLO_TRACE=1` | Build the test images with the fylo trace wrapper and the start snapshot (see "FYLO trace and capture before retry"). Off by default; never for kestrel or production images. |
 
 ## The pieces
 
@@ -487,6 +490,98 @@ tests' 10 s client timeout). Tokens last 60 seconds, so `test.sh` makes fresh on
 test file and runs the files one by one (with `MESAIL_TEST_RUN`, one run
 with one set of tokens).
 
+**Seed retries** (slice OP8): a seed call that does not answer `200` is
+tried again up to 3 times, 5 s apart, with a fresh service token. Every try
+is logged with its status, time, code, error number and clock time, for
+example `seed person operator: 503 time=5.1s code=unavailable number=MS1048
+at=10:12:04Z, retry 1 of 3 in 5 s`, and the last line says `(after retry N
+of 3)`. When every try fails the warning stays. When the answer is a
+store-unavailable number of the app (`stack.json` `storeUnavailable`, for
+example `MS1048`), the state is captured BEFORE the first retry (next
+section), once per app per run.
+
+### FYLO trace and capture before retry (slice OP8)
+
+Used to find why the first store call on a fresh `directory` takes over
+5 s (MS1048). Plan: `fylo-capture-before-retry.md` in the MESAIL Build
+Coordinator's notes.
+
+With `MESAIL_FYLO_TRACE=1`, `build.sh` passes the build argument
+`MESAIL_FYLO_TRACE=1` to the Lambda and realtime images (default `0`: the
+image is unchanged). Then:
+
+- `/usr/local/bin/fylo` is a bash wrapper (`deploy/lambda/fylo-trace.sh`);
+  the real binary is `/usr/local/lib/mesail/fylo.real`. It writes one line
+  `<UTC time> fylo-start pid=<pid> subcommand=<word>` (never the arguments
+  or the environment) to `/tmp/fylo-trace-<pid>.log` and to
+  `/tmp/fylo-trace-starts.log`, sends only fylo's stderr, with a UTC time
+  on each line, to `/tmp/fylo-trace-<pid>.log`, and ends with `exec`, so
+  fylo keeps the wrapper's pid and TACHYON's SIGKILL reaches fylo itself.
+  stdin and stdout are not touched (they carry `exec --loop`). A trace with
+  no end and an MS1048 means TACHYON killed that fylo.
+- The start scripts (`start.sh`, `realtime-start.sh`) run
+  `deploy/lambda/fylo-start-snapshot.sh` BEFORE the app starts (so no fylo
+  of this container runs yet): a read-only tar of the root and its owner
+  files `.<root>.fylo-root-owner.lock*` to `/tmp/fylo-root-at-start.tar`,
+  and one line (UTC time, bytes, seconds) to `/tmp/fylo-trace-start.log`.
+  A root over 200 MB is skipped, and the line says so.
+- `build.sh` runs `deploy/lambda/fylo-trace_test.sh` in the `directory`
+  image (`trace-wrapper-check.log`): same pid, hidden arguments, stderr
+  only to the log, and no fylo left after a SIGKILL.
+- `down.sh` copies each container's start line and fylo start list to
+  `<log dir>/fylo-trace/<container>/` and prints whether the snapshot came
+  before the first fylo start.
+
+**Capture before retry** (`scripts/floci/capture.sh <service> <number>`,
+called by the seed retry, or by hand): it saves the state before any retry
+or other call to that app:
+
+1. `docker compose stop` (never `rm`) `scheduler` and `scheduler-daily`,
+   and at once `docker stop` (never `rm`) the app's containers
+   `floci-aws-mesail-<service>-<id>`.
+2. Into `<log dir>/capture-<HHMMSS>/`: `containers.txt`; `fylo-trace/<container>/`
+   with the start snapshot, the start line, the fylo start list, every
+   `fylo-trace-<pid>.log` and the container log (`docker cp` from the
+   stopped container); `volume.txt` (the app's EFS volume, found as for the
+   blob folder); `root-after.tar`, the root and its owner files read through
+   a one-shot container that mounts the volume READ-ONLY; and
+   `owner-files/`.
+3. `timing.txt`: a one-shot container from the app's own image, as uid
+   10001, with only the app's `FYLO_` variables (values never printed),
+   unpacks the start snapshot (or `root-after.tar` when there is none; the
+   first line says which) into a scratch root `/mnt/data/capture-<HHMMSS>`
+   with the owner files under that name, starts the real fylo with
+   TACHYON 26.46.02's options (`exec --loop --root ... --max-request-bytes
+   1048576 --max-response-bytes 8388608`) with no 5 s limit (10 minutes per
+   answer), and times start plus handshake apart from the failed request's
+   store steps in order (`stack.json` `captureSteps`; for `directory`: read
+   `local-parts`, write `local-parts`, find in `people`, write `people`),
+   then fylo's stderr. It removes only the scratch root.
+4. `docker compose start` the scheduler services again; then the retry.
+
+The tars stay on the Mac until FYLO says they can go (dev test data only).
+`scripts/floci/capture_test.sh` (run by `scripts/gates.sh`) checks the
+order with a fake MS1048 and fake `docker`, `curl` and `aws`.
+
+### SMTP edge (`Dockerfile` target `smtp`, slice OP8)
+
+`edge/smtp` runs as the container `smtp` from
+`deploy/floci/compose.blobs.yaml`, started by `blobs.sh` with the router
+once the blob folder exists: a static Go binary on `scratch`, user 10001,
+on `mesail_floci_backend`, port 25 published on `127.0.0.1:12525` only
+(`MESAIL_SMTP_PORT`). Settings: `MESAIL_DIRECTORY_URL` and
+`MESAIL_MAIL_IN_URL` are the router (`http://router:8080`),
+`MESAIL_RAW_STORE_DIR` is the shared blob folder (the `blobs` subpath of
+the `mail` volume at `/blobs`, the folder `mail-in` reads as
+`/mnt/data/blobs`), and the service token comes from `identity` with the
+`mesail-service` secret as a compose secret file. `blobs.sh` waits up to
+60 s for the `220` banner and writes the address to `<log dir>/smtp-address`;
+`test.sh` passes it as `MESAIL_SMTP_ADDR`, so `tests/blackbox/Smtp_test.go`
+runs. If the banner does not come (in the dev host: no Lima forward for
+12525), the run warns and the SMTP tests skip. `down.sh` stops it in the
+dev host and removes it with `MESAIL_VM=colima`. Production SMTP
+(kestrel, ADR 0007 section 4) is slice OP2.
+
 ### Scheduler (Floci)
 
 In Lambda form no `@Schedule` worker runs, so the `scheduler` container
@@ -537,6 +632,7 @@ OPERATIONS "Scheduled work" are for `ty start` only.
 | 18080 | Router (`MESAIL_BASE_URL` of the blackbox tests) |
 | 18180 | Keycloak under `/idp` (for checks only; the tests never call it) |
 | 14566 / 4566 | Floci (AWS API) in the dev host / in Colima |
+| 12525 | SMTP edge (`MESAIL_SMTP_ADDR` of the blackbox tests; the dev host needs a Lima forward for it) |
 
 ## Not done yet
 
@@ -548,6 +644,5 @@ OPERATIONS "Scheduled work" are for `ty start` only.
   for `"daily": true`, and repeat a call while it answers `more: true`.
   Such rules all fire in the same second; the one-call-at-a-time queue per
   FYLO function and the 2-second sweep budget (slice K16) keep that short.
-- The SMTP edge container (`edge/smtp`, slice M1) and `MESAIL_SMTP_ADDR`.
 - Event relay schedules (EventBridge) and the realtime WebSocket API.
 - Deployment to kestrel through PaaS.

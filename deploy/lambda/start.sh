@@ -34,6 +34,7 @@ start_server() {
   copy_stored "$MESAIL_STORED_CACHE" "$TAC_CACHE_DIR"
   copy_stored "$MESAIL_STORED_APP" "$MESAIL_APP_ROOT"
   add_function_secrets
+  /usr/local/lib/mesail/fylo-start-snapshot.sh "$MESAIL_DATA_ROOT"
   echo "mesail: starting $MESAIL_SERVICE (data root: ${MESAIL_DATA_ROOT:-none})"
   /usr/local/lib/mesail/forwards.sh
   exec ty start "$MESAIL_APP_ROOT" --port "$AWS_LWA_PORT"

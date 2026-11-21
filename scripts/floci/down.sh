@@ -7,8 +7,17 @@ compose() {
   docker compose --project-directory "$(mesail_root)" "$@"
 }
 
-used_profile() {
+base_profile() {
   cat "$(mesail_log_dir)/compose-profile" 2> /dev/null || echo "--file $(mesail_root)/docker-compose.yml"
+}
+
+blobs_volume() {
+  cat "$(mesail_log_dir)/blobs-volume" 2> /dev/null || true
+}
+
+used_profile() {
+  if [ -z "$(blobs_volume)" ]; then base_profile; return; fi
+  echo "$(base_profile) --file $(mesail_root)/deploy/floci/compose.blobs.yaml"
 }
 
 function_containers() {
@@ -49,11 +58,35 @@ own_floci() {
   [ "${MESAIL_VM:-mesail}" = colima ] && grep -q -- '--profile floci' "$(mesail_log_dir)/compose-profile" 2> /dev/null
 }
 
+first_line_time() {
+  head -1 "$1" 2> /dev/null | cut -d' ' -f1
+}
+
+trace_order() {
+  local folder="$1" snapshot first
+  snapshot="$(first_line_time "$folder/fylo-trace-start.log")"
+  first="$(first_line_time "$folder/fylo-trace-starts.log")"
+  if [ -z "$snapshot" ]; then echo "no start snapshot line"; return; fi
+  if [ -z "$first" ] || [[ "$snapshot" < "$first" ]]; then echo "start snapshot $snapshot before the first fylo start ${first:-none}"; return; fi
+  echo "WARNING: first fylo start $first before the start snapshot $snapshot"
+}
+
+save_trace() {
+  local container="$1" folder
+  if [ "$MESAIL_FYLO_TRACE" != 1 ]; then return 0; fi
+  folder="$(mesail_log_dir)/fylo-trace/$container"
+  mkdir -p "$folder"
+  docker cp "$container:/tmp/fylo-trace-start.log" "$folder/" > /dev/null 2>&1 || return 0
+  docker cp "$container:/tmp/fylo-trace-starts.log" "$folder/" > /dev/null 2>&1 || true
+  echo "fylo trace of $container: $(grep -c . "$folder/fylo-trace-starts.log" 2> /dev/null || echo 0) fylo starts; $(trace_order "$folder")"
+}
+
 save_logs() {
   local container
   for container in $(docker ps --all --filter network=mesail_floci_backend --format '{{.Names}}'); do
     docker logs --timestamps "$container" > "$(mesail_log_dir)/container-$container.log" 2>&1 || true
     echo "saved the log of $container"
+    save_trace "$container"
   done
 }
 
@@ -61,6 +94,8 @@ main() {
   local profile
   mesail_load_settings
   mesail_load_secrets
+  MESAIL_BLOBS_VOLUME="$(blobs_volume)"
+  export MESAIL_BLOBS_VOLUME
   profile="$(used_profile)"
   mesail_step save-logs save_logs
   if ! own_floci; then

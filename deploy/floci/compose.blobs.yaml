@@ -22,6 +22,38 @@ services:
         volume:
           subpath: blobs
 
+  smtp:
+    image: mesail-smtp:${MESAIL_IMAGE_TAG:-dev}
+    depends_on:
+      blobs-folder:
+        condition: service_completed_successfully
+    environment:
+      SMTP_INBOUND_PORT: "25"
+      MAIL_HOSTNAME: ${MESAIL_SMTP_HOSTNAME:-mx.example.com}
+      MESAIL_DIRECTORY_URL: http://router:8080
+      MESAIL_MAIL_IN_URL: http://router:8080
+      MESAIL_RAW_STORE_DIR: /blobs
+      MESAIL_SERVICETOKENS_URL: http://router:8080/api/v1/identity/service-token
+      MESAIL_SERVICE_CLIENT_SECRET_FILE: /run/secrets/service-client-secret
+    secrets:
+      - source: service-client-secret
+        uid: "10001"
+        gid: "10001"
+        mode: 0400
+    ports:
+      - "127.0.0.1:${MESAIL_SMTP_PORT:-12525}:25"
+    volumes:
+      - type: volume
+        source: blobs
+        target: /blobs
+        volume:
+          subpath: blobs
+    networks: [backend]
+
+secrets:
+  service-client-secret:
+    environment: MESAIL_SERVICE_CLIENT_SECRET
+
 volumes:
   blobs:
     name: ${MESAIL_BLOBS_VOLUME:?run scripts/floci/blobs.sh}

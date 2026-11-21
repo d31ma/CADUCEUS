@@ -1935,11 +1935,28 @@ Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
      the stopped container with `docker cp` (see the next point);
   3. time `fylo` on a copy of the root (made from the start snapshot when
      there is one, else from `root-after.tar`; the times name which one)
-     with no time limit, in a one-shot container from the app's image (the
-     same `fylo` binary) started with `--rm` and an anonymous volume at
-     `/mnt/data`, so the copy keeps the same layout and names
-     (`/mnt/data/<service>` with its owner files beside it) and Docker
-     deletes it with the container; on Linux ext4 in the dev host. Start
+     with no time limit, in a one-shot `--rm` container from the app's
+     image (the same `fylo` binary), as uid 10001, with only the app's
+     `FYLO_` variables, that mounts the kept named volume
+     `mesail-op8-capture` at `/mnt/data` (made once with `docker volume
+     create`, on the dev host's ext4 data disk, and never removed by a
+     script: the dev host rule is that no script removes its volumes; an
+     anonymous volume would be removed with the `--rm` container). It
+     unpacks the copy as `/mnt/data/<service>` with its owner files
+     `.<service>.fylo-root-owner.lock*` beside it, under the app's own
+     names and layout, with nothing renamed. Before it unpacks, it lists
+     the tar's top-level paths and refuses if any of them is not the root
+     or its owner files, or if one already exists in the volume. At the
+     end it deletes exactly those paths (each logged as `deleted <path>`)
+     and prints the volume's size and entry count. Because the real data
+     has the same names, two guards keep the copy away from it: (a) no
+     container that writes or deletes at `/mnt/data` mounts the app's EFS
+     volume; the read-only tar for `root-after.tar` mounts it at
+     `/source:ro`, and no container mounts both; (b) the marker file
+     `/mnt/data/.mesail-op8-capture-marker` holds `mesail-op8-capture`. It
+     is written once into the new empty volume and never deleted, and the
+     unpack and the delete check it first: they refuse when the volume has
+     files but no marker, or a marker with another name. Start
      `fylo` with the same command line TACHYON uses: with 26.46.02 that is
      `fylo exec --loop --root <root> --max-request-bytes 1048576
      --max-response-bytes 8388608`, with no profile, no `--exclusive-root`

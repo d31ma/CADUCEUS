@@ -11,8 +11,14 @@ type OutboxStore struct {
 
 func (OutboxStore) largestPage() int { return 100 }
 
-func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
-	return store.flagged(outbox.Filters{}.Waiting(), limit)
+func (store OutboxStore) Waiting() ([]outbox.Document, error) {
+	entries, err := store.Registry.Collections(Queue{}.Base())
+	if err != nil {
+		return nil, err
+	}
+	return store.collect(entries, func(collection string) ([]outbox.Document, error) {
+		return store.allIn(collection, outbox.Filters{}.Waiting())
+	})
 }
 
 func (store OutboxStore) WithDeadLetters(limit int) ([]outbox.Document, error) {
@@ -50,17 +56,19 @@ func (store OutboxStore) flagged(filter any, limit int) ([]outbox.Document, erro
 	if err != nil {
 		return nil, err
 	}
-	documents, err := store.collect(entries, filter, limit)
+	documents, err := store.collect(entries, func(collection string) ([]outbox.Document, error) {
+		return store.inCollection(collection, filter, limit)
+	})
 	if err != nil {
 		return nil, err
 	}
 	return documents[:min(len(documents), limit)], nil
 }
 
-func (store OutboxStore) collect(entries []CollectionEntry, filter any, limit int) ([]outbox.Document, error) {
+func (store OutboxStore) collect(entries []CollectionEntry, read func(collection string) ([]outbox.Document, error)) ([]outbox.Document, error) {
 	documents := []outbox.Document{}
 	for _, entry := range entries {
-		found, err := store.inCollection(entry.Collection, filter, limit)
+		found, err := read(entry.Collection)
 		if err != nil {
 			return nil, err
 		}
@@ -71,6 +79,18 @@ func (store OutboxStore) collect(entries []CollectionEntry, filter any, limit in
 
 func (store OutboxStore) inCollection(collection string, filter any, limit int) ([]outbox.Document, error) {
 	page, _, err := store.Store.Page(collection, filter, "", min(limit, store.largestPage()))
+	if err != nil {
+		return nil, err
+	}
+	items, err := Decoder{}.Items(page)
+	if err != nil {
+		return nil, err
+	}
+	return store.documents(collection, items), nil
+}
+
+func (store OutboxStore) allIn(collection string, filter any) ([]outbox.Document, error) {
+	page, err := store.Store.All(collection, filter)
 	if err != nil {
 		return nil, err
 	}

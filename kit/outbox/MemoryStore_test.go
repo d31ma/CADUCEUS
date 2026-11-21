@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestMemoryStoreListsPendingDocumentsOldestFirstUpToTheLimit(t *testing.T) {
+func TestMemoryStoreListsWaitingDocumentsInTheOrderTheyWereAdded(t *testing.T) {
 	store := NewMemoryStore()
 	first := Ref{Collection: "channels", Id: "1"}
 	second := Ref{Collection: "channels", Id: "2"}
@@ -14,15 +14,23 @@ func TestMemoryStoreListsPendingDocumentsOldestFirstUpToTheLimit(t *testing.T) {
 	store.Put(second, Fields{OutboxPending: 2, OutboxWaiting: true})
 	store.Put(first, Fields{OutboxPending: 3, OutboxWaiting: true})
 
-	all, err := store.Pending(10)
-	one, _ := store.Pending(1)
-	none, _ := store.Pending(-1)
+	all, err := store.Waiting()
 
 	if err != nil || len(all) != 2 || all[0].Ref != first || all[0].Fields.OutboxPending != 3 || all[1].Ref != second {
 		t.Fatalf("documents %+v, error %v", all, err)
 	}
-	if len(one) != 1 || len(none) != 0 {
-		t.Fatalf("limited %+v and %+v", one, none)
+}
+
+func TestMemoryStoreCountsSaves(t *testing.T) {
+	store := NewMemoryStore()
+	ref := Ref{Collection: "channels", Id: "1"}
+	store.Put(ref, Fields{})
+
+	_ = store.Save(ref, Fields{})
+	_ = store.Save(ref, Fields{})
+
+	if store.Saves() != 2 {
+		t.Fatalf("saves %d", store.Saves())
 	}
 }
 
@@ -52,13 +60,13 @@ func TestMemoryStoreFailsOnlyTheNextCall(t *testing.T) {
 	store.Put(ref, Fields{})
 	store.FailNextSave(errors.New("save failed"))
 	store.FailNextLoad(errors.New("load failed"))
-	store.FailNextPending(errors.New("pending failed"))
+	store.FailNextWaiting(errors.New("waiting failed"))
 
 	saveErr := store.Save(ref, Fields{})
 	_, loadErr := store.Load(ref)
-	_, pendingErr := store.Pending(1)
-	if saveErr == nil || loadErr == nil || pendingErr == nil {
-		t.Fatalf("errors %v %v %v", saveErr, loadErr, pendingErr)
+	_, waitingErr := store.Waiting()
+	if saveErr == nil || loadErr == nil || waitingErr == nil {
+		t.Fatalf("errors %v %v %v", saveErr, loadErr, waitingErr)
 	}
 	_, loadAgain := store.Load(ref)
 	if store.Save(ref, Fields{}) != nil || loadAgain != nil {

@@ -107,7 +107,7 @@ func TestRelayRetriesATransientFailureAfterTheBackoffAndKeepsOrder(t *testing.T)
 	fixture.pusher.Recover("messaging")
 	fixture.now = startTime().Add(4 * time.Second)
 	early := fixture.run(t)
-	if early != (Report{Documents: 1}) || len(fixture.pusher.PushedTo("messaging")) != 0 {
+	if early != (Report{}) || len(fixture.pusher.PushedTo("messaging")) != 0 {
 		t.Fatalf("early report %+v, pushed %+v", early, fixture.pusher.Pushed())
 	}
 
@@ -196,9 +196,9 @@ func TestRelayKeepsAnEventStagedDuringTheRun(t *testing.T) {
 	}
 }
 
-func TestRelayReportsAFailingPendingQuery(t *testing.T) {
+func TestRelayReportsAFailingWaitingQuery(t *testing.T) {
 	fixture := newRelayFixture(t, testSettings(), channelCreated("evt_1"))
-	fixture.store.FailNextPending(errors.New("query failed"))
+	fixture.store.FailNextWaiting(errors.New("query failed"))
 
 	_, err := fixture.relay.RunOnce(10)
 

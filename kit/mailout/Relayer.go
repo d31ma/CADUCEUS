@@ -27,7 +27,8 @@ func (relayer Relayer) RelayDocument(ref outbox.Ref, domainId string) (outbox.Re
 }
 
 func (relayer Relayer) Pending(limit int) ([]outbox.Document, error) {
-	return relayer.Store.Pending(limit)
+	documents, err := relayer.Store.Waiting()
+	return documents[:min(len(documents), max(limit, 0))], err
 }
 
 func (relayer Relayer) DeadLetters(limit int) ([]outbox.DeadLetter, error) {

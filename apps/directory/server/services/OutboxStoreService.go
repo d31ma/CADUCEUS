@@ -2,7 +2,6 @@ import (
 	"cmp"
 	"errors"
 	"slices"
-	"time"
 
 	"mesail.dev/packages/outbox"
 )
@@ -17,14 +16,8 @@ type OutboxStoreService struct {
 	names *CollectionNamesService
 }
 
-func (store *OutboxStoreService) PendingIn(domainId string, limit int) ([]outbox.Document, error) {
-	waiting, failure := store.members.Waiting(domainId)
-	due := store.due(waiting, time.Now())
-	return due[:min(max(limit, 0), len(due))], failure
-}
-
-func (store *OutboxStoreService) due(documents []outbox.Document, now time.Time) []outbox.Document {
-	return slices.DeleteFunc(documents, func(document outbox.Document) bool { return !(OutboxSchedule{}).Due(document, now) })
+func (store *OutboxStoreService) WaitingIn(domainId string) ([]outbox.Document, error) {
+	return store.members.Waiting(domainId)
 }
 
 func (store *OutboxStoreService) Dead() ([]outbox.Document, error) {

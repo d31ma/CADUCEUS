@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Outbox sweeps take only due documents, oldest due first (slice K20).
+  After a subscriber outage, documents waiting in backoff no longer fill
+  the 25 places of a sweep: due retries behind them were held up to 900 s
+  per round, and every repeat rewrote the same unchanged documents. The
+  kit `outbox.Store` method `Pending(limit)` is now `Waiting()` (every
+  waiting document); the kit `Relay` picks the due ones with the new
+  `outbox.DueOrder`, answers `"more": true` only when due work is left,
+  and no longer saves a document it did not change. All seven producers
+  (`channels`, `devicebox`, `directory`, `mail-in`, `mail-out`,
+  `messaging`, `notify`) use it; `directory`'s own due filter is gone.
+  Routes, fields and error numbers do not change, and the outbox count
+  and list routes still count every waiting document.
 - Spread scheduled work (slice K16): every `@Schedule` worker has its own
   `initialDelaySeconds`, so apps that start together no longer sweep in
   the same second (OPERATIONS "Scheduled work" lists the times). The

@@ -15,8 +15,8 @@ func NewOutboxStore(documents Documents) OutboxStore {
 	return OutboxStore{documents: documents, store: NewStore(documents)}
 }
 
-func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
-	return store.flagged("outboxWaiting", limit)
+func (store OutboxStore) Waiting() ([]outbox.Document, error) {
+	return store.everyFlagged("outboxWaiting")
 }
 
 func (store OutboxStore) Dead(limit int) ([]outbox.Document, error) {
@@ -56,6 +56,30 @@ func (store OutboxStore) flagged(flag string, limit int) ([]outbox.Document, err
 		found, failures = append(found, rows...), append(failures, err)
 	}
 	return store.first(found, limit), errors.Join(failures...)
+}
+
+func (store OutboxStore) everyFlagged(flag string) ([]outbox.Document, error) {
+	records, err := store.store.Domains()
+	if err != nil {
+		return nil, err
+	}
+	found := []outbox.Document{}
+	failures := []error{}
+	for _, record := range records {
+		rows, err := store.allIn(record.Name, flag)
+		found, failures = append(found, rows...), append(failures, err)
+	}
+	return found, errors.Join(failures...)
+}
+
+func (store OutboxStore) allIn(collection string, flag string) ([]outbox.Document, error) {
+	statement, err := SqlText{}.AllOutbox(collection, flag)
+	if err != nil {
+		return nil, err
+	}
+	rows := []OutboxRow{}
+	err = store.documents.Rows(statement, &rows)
+	return store.documentsOf(collection, rows), err
 }
 
 func (store OutboxStore) rowsIn(collection string, flag string, limit int) ([]outbox.Document, error) {

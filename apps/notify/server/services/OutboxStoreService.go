@@ -1,6 +1,7 @@
 import (
 	"cmp"
 	"encoding/json"
+	"math"
 
 	"mesail.dev/packages/outbox"
 )
@@ -13,8 +14,8 @@ type OutboxStoreService struct {
 	registry *OutboxCollectionsService
 }
 
-func (store *OutboxStoreService) Pending(limit int) ([]outbox.Document, error) {
-	return store.documentsWhere(store.where(outbox.Filters{}.Waiting()), limit)
+func (store *OutboxStoreService) Waiting() ([]outbox.Document, error) {
+	return store.documentsWhere(store.where(outbox.Filters{}.Waiting()), math.MaxInt)
 }
 
 func (store *OutboxStoreService) Dead(limit int) ([]outbox.Document, error) {

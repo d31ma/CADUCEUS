@@ -30,14 +30,14 @@ func (test *OutboxTest) TestTheRelayRetriesAPendingMemberEventWhileServiceTokens
 func (test *OutboxTest) TestAnEventThatIsNotDueIsLeftForTheNextSweep() {
 	relay, _, _ := test.world()
 	test.relayUntil(relay, func() bool { return test.noneDue(relay) })
-	due, err := relay.store.PendingIn("outbox-unit.test", 20)
+	due, err := test.due(relay)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(0, len(due))
 }
 
 func (test *OutboxTest) TestAFreshEventIsDue() {
 	relay, _, _ := test.world()
-	due, err := relay.store.PendingIn("outbox-unit.test", 20)
+	due, err := test.due(relay)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(due))
 }
@@ -130,6 +130,74 @@ func (test *OutboxTest) TestARelayCallStopsAfterOneSecondAndThreeDocuments() {
 	Assert.Equals(3, relay.sweepSize())
 }
 
+func (test *OutboxTest) TestTheSweepRelaysADueDocumentBehindTwentySixDocumentsThatAreNotDue() {
+	relay, _, _ := test.world()
+	later := test.momentFromNow(time.Hour)
+	notDue := test.retriedMembers("later", test.notDueCount(), later)
+	due := test.retriedMembers("due", 1, test.momentFromNow(-time.Minute))[0]
+	_, err := test.relayUntil(relay, func() bool { return test.firstPending(relay, due).Attempts > test.firstAttempts() })
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.Equals(test.firstAttempts()+1, test.firstPending(relay, due).Attempts)
+	Assert.Equals(test.notDueCount(), test.unchangedCount(relay, notDue, later))
+}
+
+func (test *OutboxTest) retriedMembers(prefix string, count int, nextAttemptAt string) []outbox.Ref {
+	members := &MemberStorageService{documents: &DocumentsService{dataSource: DataSource{}}, names: &CollectionNamesService{}}
+	refs := []outbox.Ref{}
+	for index := range count {
+		ref, err := members.Insert(test.retriedMember(fmt.Sprintf("%s-%d", prefix, index), nextAttemptAt))
+		Assert.Equals("<nil>", fmt.Sprint(err))
+		refs = append(refs, ref)
+	}
+	return refs
+}
+
+func (test *OutboxTest) retriedMember(memberId string, nextAttemptAt string) MemberDocument {
+	staged, stageErr := (&EventService{settings: &SettingsService{}}).StageMemberSaved(MemberDocument{MemberId: memberId, DomainId: test.unitDomain(), DisplayName: "Retried", State: "active"})
+	pending, decodeErr := outbox.Codec{}.DecodePending(staged.PendingEvents)
+	pending[0].Attempts, pending[0].NextAttemptAt = test.firstAttempts(), nextAttemptAt
+	encoded, encodeErr := outbox.Codec{}.EncodePending(pending)
+	Assert.Equals("<nil>", fmt.Sprint(errors.Join(stageErr, decodeErr, encodeErr)))
+	staged.PendingEvents = encoded
+	return staged
+}
+
+func (test *OutboxTest) firstPending(relay *OutboxRelayService, ref outbox.Ref) outbox.PendingEvent {
+	fields, _ := relay.store.Load(ref)
+	state, _ := outbox.Codec{}.Read(fields)
+	if len(state.Pending) == 0 {
+		return outbox.PendingEvent{}
+	}
+	return state.Pending[0]
+}
+
+func (test *OutboxTest) unchangedCount(relay *OutboxRelayService, refs []outbox.Ref, nextAttemptAt string) int {
+	count := 0
+	for _, ref := range refs {
+		event := test.firstPending(relay, ref)
+		if event.Attempts == test.firstAttempts() && event.NextAttemptAt == nextAttemptAt {
+			count++
+		}
+	}
+	return count
+}
+
+func (*OutboxTest) momentFromNow(offset time.Duration) string {
+	return time.Now().UTC().Add(offset).Format(time.RFC3339Nano)
+}
+
+func (*OutboxTest) notDueCount() int {
+	return 26
+}
+
+func (*OutboxTest) firstAttempts() int {
+	return 1
+}
+
+func (*OutboxTest) unitDomain() string {
+	return "outbox-unit.test"
+}
+
 func (test *OutboxTest) pendingMembers(domainId string, count int) {
 	members := &MemberStorageService{documents: &DocumentsService{dataSource: DataSource{}}, names: &CollectionNamesService{}}
 	for index := range count {
@@ -198,7 +266,12 @@ func (test *OutboxTest) attempted(relay *OutboxRelayService, ref outbox.Ref) boo
 	return len(state.Pending) > 0 && state.Pending[0].Attempts > 0
 }
 
+func (test *OutboxTest) due(relay *OutboxRelayService) ([]outbox.Document, error) {
+	waiting, err := relay.store.WaitingIn("outbox-unit.test")
+	return outbox.DueOrder{}.Due(waiting, time.Now()), err
+}
+
 func (test *OutboxTest) noneDue(relay *OutboxRelayService) bool {
-	due, _ := relay.store.PendingIn("outbox-unit.test", 20)
+	due, _ := test.due(relay)
 	return len(due) == 0
 }

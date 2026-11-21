@@ -44,11 +44,11 @@ func (test *OutboxStoreServiceTest) TestSaveSettlesTheDocument() {
 	Assert.Equals(1, fields.OutboxDead)
 }
 
-func (test *OutboxStoreServiceTest) TestPendingFindsAStagedDocument() {
+func (test *OutboxStoreServiceTest) TestWaitingFindsAStagedDocument() {
 	NotifyTestSetup{}.FreshRegistries()
 	ref, _ := test.stored()
-	documents, err := NotifyTestSetup{}.OutboxStore().Pending(100000)
-	Assert.IsTrue(err == nil, "pending failed")
+	documents, err := NotifyTestSetup{}.OutboxStore().Waiting()
+	Assert.IsTrue(err == nil, "waiting failed")
 	Assert.IsTrue(test.contains(documents, ref), "staged document missing")
 }
 

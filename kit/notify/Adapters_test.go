@@ -35,10 +35,10 @@ func TestSeenStoreFunctionsCallTheFunctions(t *testing.T) {
 func TestOutboxStoreFunctionsCallTheFunctions(t *testing.T) {
 	memory := outbox.NewMemoryStore()
 	ref := outbox.Ref{Collection: "notify-summaries", Id: "1"}
-	var store outbox.Store = OutboxStoreFunctions{PendingFunction: memory.Pending, LoadFunction: memory.Load, SaveFunction: memory.Save}
+	var store outbox.Store = OutboxStoreFunctions{WaitingFunction: memory.Waiting, LoadFunction: memory.Load, SaveFunction: memory.Save}
 	saving := store.Save(ref, outbox.Fields{PendingEvents: []string{}, DeadEvents: []string{}, OutboxPending: 1, OutboxWaiting: true})
 	fields, loading := store.Load(ref)
-	pending, listing := store.Pending(10)
+	pending, listing := store.Waiting()
 	if saving != nil || loading != nil || listing != nil || fields.OutboxPending != 1 || len(pending) != 1 {
 		t.Fatalf("fields %+v, pending %d, errors %v %v %v", fields, len(pending), saving, loading, listing)
 	}

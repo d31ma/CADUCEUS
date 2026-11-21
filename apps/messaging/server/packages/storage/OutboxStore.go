@@ -13,9 +13,9 @@ type OutboxStore struct {
 	Registry  Registry
 }
 
-func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
+func (store OutboxStore) Waiting() ([]outbox.Document, error) {
 	rows, failure := store.rowsOfAll()
-	return store.first(store.kept(rows, store.pendingCount), limit), failure
+	return store.kept(rows, store.pendingCount), failure
 }
 
 func (store OutboxStore) Load(ref outbox.Ref) (outbox.Fields, error) {
@@ -85,10 +85,6 @@ func (OutboxStore) pendingCount(fields outbox.Fields) int {
 
 func (OutboxStore) deadCount(fields outbox.Fields) int {
 	return fields.OutboxDead
-}
-
-func (OutboxStore) first(rows []outbox.Document, limit int) []outbox.Document {
-	return rows[:min(len(rows), max(limit, 0))]
 }
 
 func (OutboxStore) fields(row OutboxRow) outbox.Fields {

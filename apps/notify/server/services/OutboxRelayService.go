@@ -49,7 +49,7 @@ func (service *OutboxRelayService) RetryDead(authorization string, request Retry
 
 func (service *OutboxRelayService) relay() (outbox.Relay, error) {
 	settings, failure := service.settings.Outbox()
-	store := notify.OutboxStoreFunctions{PendingFunction: service.store.Pending, LoadFunction: service.store.Load, SaveFunction: service.store.Save}
+	store := notify.OutboxStoreFunctions{WaitingFunction: service.store.Waiting, LoadFunction: service.store.Load, SaveFunction: service.store.Save}
 	return outbox.NewRelay(store, service.pusherOrDefault(), settings, time.Now), failure
 }
 

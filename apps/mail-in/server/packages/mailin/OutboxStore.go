@@ -11,12 +11,12 @@ type OutboxStore struct {
 	Registry CollectionRegistry
 }
 
-func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
-	return store.matching(store.Storage.Where(outbox.Filters{}.Waiting()), limit)
+func (store OutboxStore) Waiting() ([]outbox.Document, error) {
+	return store.matching(store.Storage.Where(outbox.Filters{}.Waiting()))
 }
 
 func (store OutboxStore) Dead() ([]outbox.Document, error) {
-	return store.matching(store.Storage.Where(outbox.Filters{}.HasDead()), store.Storage.Everything())
+	return store.matching(store.Storage.Where(outbox.Filters{}.HasDead()))
 }
 
 func (store OutboxStore) Load(ref outbox.Ref) (outbox.Fields, error) {
@@ -43,7 +43,7 @@ func (store OutboxStore) Save(ref outbox.Ref, fields outbox.Fields) error {
 	return store.Storage.Replace(ref.Collection, ref.Id, fields)
 }
 
-func (store OutboxStore) matching(where map[string]any, limit int) ([]outbox.Document, error) {
+func (store OutboxStore) matching(where map[string]any) ([]outbox.Document, error) {
 	names, err := store.Registry.All()
 	if err != nil {
 		return []outbox.Document{}, err
@@ -51,22 +51,19 @@ func (store OutboxStore) matching(where map[string]any, limit int) ([]outbox.Doc
 	found := []outbox.Document{}
 	failures := []error{}
 	for _, name := range names {
-		if len(found) >= limit {
-			break
-		}
-		documents, err := store.documentsIn(name, where, limit-len(found))
+		documents, err := store.documentsIn(name, where)
 		found, failures = append(found, documents...), append(failures, err)
 	}
 	return found, errors.Join(failures...)
 }
 
-func (store OutboxStore) documentsIn(collection string, where map[string]any, limit int) ([]outbox.Document, error) {
+func (store OutboxStore) documentsIn(collection string, where map[string]any) ([]outbox.Document, error) {
 	err := store.Storage.Ensure(collection)
 	if err != nil {
 		return nil, err
 	}
 	rows := []OutboxRow{}
-	err = store.Storage.First(collection, where, limit, &rows)
+	err = store.Storage.First(collection, where, store.Storage.Everything(), &rows)
 	return store.documents(collection, rows), err
 }
 

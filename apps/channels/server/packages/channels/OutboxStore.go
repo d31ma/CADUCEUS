@@ -15,9 +15,9 @@ func NewOutboxStore(documents Documents) OutboxStore {
 	return OutboxStore{documents: documents, registry: NewRegistry(documents)}
 }
 
-func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
+func (store OutboxStore) Waiting() ([]outbox.Document, error) {
 	rows, err := store.rows(map[string]any{store.waitingField(): true})
-	return store.first(store.kept(rows, store.pendingCount), limit), err
+	return store.kept(rows, store.pendingCount), err
 }
 
 func (store OutboxStore) Dead() ([]outbox.Document, error) {
@@ -99,13 +99,6 @@ func (OutboxStore) waitingField() string {
 
 func (OutboxStore) deadField() string {
 	return "outboxHasDead"
-}
-
-func (OutboxStore) first(rows []outbox.Document, limit int) []outbox.Document {
-	if len(rows) > limit {
-		return rows[:limit]
-	}
-	return rows
 }
 
 func (OutboxStore) fields(row OutboxRow) outbox.Fields {

@@ -70,14 +70,14 @@ func TestRunWithinRelaysEverythingInTime(t *testing.T) {
 	}
 }
 
-func TestRunWithinReportsAFailingPendingQuery(t *testing.T) {
+func TestRunWithinReportsAFailingWaitingQuery(t *testing.T) {
 	fixture := newRelayFixture(t, testSettings(), channelCreated("evt_1"))
-	fixture.store.FailNextPending(errors.New("the store stopped"))
+	fixture.store.FailNextWaiting(errors.New("the store stopped"))
 
 	_, err := fixture.relay.RunWithin(10, time.Minute)
 
 	if err == nil {
-		t.Fatal("a failing pending query should be reported")
+		t.Fatal("a failing waiting query should be reported")
 	}
 }
 

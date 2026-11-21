@@ -186,7 +186,7 @@ func TestStoresReportStorageFailures(t *testing.T) {
 			_, forItemErr := AttemptLog{Store: store}.ForItem("example.com", "x")
 			_, seenErr := SeenEvents{Store: store, Now: time.Now}.Seen("example.com", "e")
 			rememberErr := SeenEvents{Store: store, Now: time.Now}.Remember("example.com", "e")
-			_, pendingErr := OutboxStore{Store: store, Registry: registry}.Pending(10)
+			_, pendingErr := OutboxStore{Store: store, Registry: registry}.Waiting()
 			failures := []error{insertErr, claimErr, findErr, dueErr, collectionsErr, containsErr, addErr, recordErr, forItemErr, seenErr, rememberErr, pendingErr, queue.Save(saved), queue.SaveWith(saved, change)}
 			count := 0
 			for _, err := range failures {
@@ -336,7 +336,7 @@ func TestOutboxStoreReportsUnreadableItems(t *testing.T) {
 	_, err := documents.Insert(collection, map[string]any{"outboxWaiting": true, "attempts": "many"})
 	equal(t, nil, err)
 
-	_, pendingErr := OutboxStore{Store: store, Registry: registry}.Pending(10)
+	_, pendingErr := OutboxStore{Store: store, Registry: registry}.Waiting()
 	equal(t, true, pendingErr != nil)
 }
 

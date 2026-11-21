@@ -22,13 +22,12 @@ type memoryDocuments struct {
 	badContent  bool
 	failPagesIn string
 	created     int
-	pageReads   map[string]int
 	patches     int
 }
 
 func newMemory() *memoryDocuments {
 	isolateKnownCollections()
-	return &memoryDocuments{collections: map[string][]string{}, rows: map[string]map[string]map[string]any{}, pageReads: map[string]int{}}
+	return &memoryDocuments{collections: map[string][]string{}, rows: map[string]map[string]map[string]any{}}
 }
 
 func (memory *memoryDocuments) failure(operation string) error {
@@ -84,7 +83,6 @@ func (memory *memoryDocuments) Page(collection string, where map[string]any, cur
 	if err := memory.failure("page"); err != nil {
 		return Page{}, err
 	}
-	memory.pageReads[collection]++
 	if collection == memory.failPagesIn {
 		return Page{}, errors.New("page failed")
 	}

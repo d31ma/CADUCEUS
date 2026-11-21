@@ -42,12 +42,20 @@ func (text SqlText) ExpiredBodies(bodies string, nowUs int64, limit int) (Statem
 }
 
 func (text SqlText) Outbox(bodies string, flag string, limit int) (Statement, error) {
+	statement, err := text.AllOutbox(bodies, flag)
+	if err != nil {
+		return Statement{}, err
+	}
+	return Statement{Sql: statement.Sql + " LIMIT $1", Parameters: []any{limit}}, nil
+}
+
+func (text SqlText) AllOutbox(bodies string, flag string) (Statement, error) {
 	err := text.knownFlag(flag)
 	if err != nil {
 		return Statement{}, err
 	}
-	sql := "SELECT pendingEvents, deadEvents, outboxPending, outboxDead FROM " + bodies + " WHERE " + flag + " = true LIMIT $1"
-	return Statement{Sql: sql, Parameters: []any{limit}}, text.safe(bodies, "")
+	sql := "SELECT pendingEvents, deadEvents, outboxPending, outboxDead FROM " + bodies + " WHERE " + flag + " = true"
+	return Statement{Sql: sql, Parameters: []any{}}, text.safe(bodies, "")
 }
 
 func (text SqlText) firstWhere(collection string, field string, value string) (Statement, error) {

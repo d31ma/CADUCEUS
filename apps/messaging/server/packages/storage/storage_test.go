@@ -299,7 +299,7 @@ func TestTheOutboxStoreListsPendingAndDeadRows(t *testing.T) {
 	tenant := storage.tenant()
 	pendingId, _ := tenant.InsertTracked("messages-x", map[string]any{"domainId": "a.test", "outboxPending": 1}, 0)
 	tenant.InsertTracked("messages-x", map[string]any{"domainId": "a.test", "outboxDead": 1}, 0)
-	pending, _ := store.Pending(10)
+	pending, _ := store.Waiting()
 	dead, _ := store.Dead()
 	fields, err := store.Load(outbox.Ref{Collection: "messages-x", Id: pendingId})
 	if len(pending) != 1 || pending[0].Ref.Id != pendingId || len(dead) != 1 || err != nil || fields.OutboxPending != 1 {
@@ -307,9 +307,6 @@ func TestTheOutboxStoreListsPendingAndDeadRows(t *testing.T) {
 	}
 	if err := store.Save(outbox.Ref{Collection: "messages-x", Id: pendingId}, outbox.Fields{}); err != nil {
 		t.Fatal(err)
-	}
-	if empty, _ := store.Pending(0); len(empty) != 0 {
-		t.Fatal("a limit of zero lists nothing")
 	}
 }
 

@@ -56,6 +56,19 @@ writes or 20 seconds), answer `more: true` when it stopped early, and
 never scroll a collection without that filter. Tests remove the documents
 and collections they create, so a test root does not grow across runs.
 
+**A sweep takes only due documents, oldest due first** (slice K20). The
+store's `Waiting()` lists every waiting document; the kit `Relay` then
+keeps, through `outbox.DueOrder`, only documents with work it can do now:
+for at least one subscriber, the first pending event that waits for that
+subscriber has `nextAttemptAt` empty or not after now (a later event for
+the same subscriber waits behind it, to keep the order). It sorts them by
+that time, oldest first, then by collection and id, and takes the limit.
+`more: true` means due documents are left over, or the time ran out;
+documents in backoff never make it true. A document whose events cannot
+be read goes last, so its error still shows but never blocks good work.
+The relay neither loads nor saves a document when it pushed, retried and
+dead-lettered nothing.
+
 ### 2.2 A newer event replaces a waiting one (decided 2026-11-12)
 
 A document must not grow with every change while a subscriber is down
@@ -159,12 +172,12 @@ the scheduled sweep retries it.
 
 | File | What it does |
 | --- | --- |
-| `server/services/OutboxStoreService.go` (`@Service`, `@Needs dataSource DataSource`) | implements `outbox.Store`: `Pending(limit)` scrolls the service's collections with the exact match `outboxWaiting: true`, at most `limit` documents; `Load(ref)` reads one document's six fields; `Save(ref, fields)` patches exactly those six fields |
+| `server/services/OutboxStoreService.go` (`@Service`, `@Needs dataSource DataSource`) | implements `outbox.Store`: `Waiting()` scrolls the service's collections with the exact match `outboxWaiting: true` and returns every such document (the relay picks the due ones, section 2.1); `Load(ref)` reads one document's six fields; `Save(ref, fields)` patches exactly those six fields |
 | `server/services/OutboxRelayService.go` (`@Service`, `@Needs` the store service) | builds `outbox.NewRelay(store, outbox.NewHTTPPusher(tokens, timeout), settings, time.Now)` and exposes `RunOnce` and `RelayDocument` |
 | `server/controllers/OutboxController.go` (`@RequestRoute("/api/v1/<service>/outbox")`, `@Allow(Service)`) | `POST /relay` runs `RunOnce` and returns `outbox.Report`; `GET /dead` lists dead letters; `POST /dead/requeue` moves one back (`DeadLetters.Requeue`) |
 | `server/workers/outbox-relay.go` (`@Schedule({"fixedDelaySeconds":60})`) | the sweep while the service runs as a long-lived `ty start` process (see section 4) |
 
-`Pending` must know the collections to scan: they are split by domain
+`Waiting` must know the collections to scan: they are split by domain
 (`kit/collections` `CollectionName{}.ForDomain(base, domainId)`, for
 example `channels-a379a6f6eeafb9a5`). Keep them in a small install-wide collection,
 `outbox-collections`, and add a collection name to it before the first

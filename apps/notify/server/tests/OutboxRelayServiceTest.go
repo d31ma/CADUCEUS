@@ -43,6 +43,22 @@ func (test *OutboxRelayServiceTest) TestRunOnceRelaysPendingDocuments() {
 	Assert.IsTrue(report.Delivered >= 1, "nothing delivered")
 }
 
+func (test *OutboxRelayServiceTest) TestRunOnceRelaysADueDocumentBehindManyThatAreNotDue() {
+	NotifyTestSetup{}.FreshRegistries()
+	setup := NotifyTestSetup{}
+	domainId := setup.Domain()
+	_, installWide := setup.Realms(domainId)
+	later := test.attemptTime(time.Hour)
+	notDue := test.storeWaiting(domainId, later, test.notDueCount())
+	due := test.storeWaiting(domainId, test.attemptTime(-time.Minute), 1)
+	pusher := outbox.NewRecordingPusher()
+	err := test.sweepUntilPushed(setup.Relay(pusher), setup.Service(installWide), pusher, due)
+	Assert.IsTrue(err == nil, "sweep failed")
+	Assert.Equals(1, test.pushedCount(pusher, due))
+	Assert.Equals(0, test.pushedCount(pusher, notDue))
+	Assert.Equals(test.notDueCount(), test.unchangedCount(notDue, later))
+}
+
 func (test *OutboxRelayServiceTest) TestASweepHasTwoSecondsToRelay() {
 	Assert.Equals(2*time.Second, NotifyTestSetup{}.Relay(outbox.NewRecordingPusher()).timeLimit())
 }
@@ -105,4 +121,106 @@ func (test *OutboxRelayServiceTest) relayUntilDone(relay *OutboxRelayService, au
 
 func (*OutboxRelayServiceTest) relayRounds() int {
 	return 10
+}
+
+func (test *OutboxRelayServiceTest) storeWaiting(domainId string, nextAttemptAt string, count int) []SummaryRecord {
+	records := []SummaryRecord{}
+	for range count {
+		records = append(records, test.storedWaiting(domainId, nextAttemptAt))
+	}
+	return records
+}
+
+func (test *OutboxRelayServiceTest) storedWaiting(domainId string, nextAttemptAt string) SummaryRecord {
+	record := NotifyTestSetup{}.StagedSummary(domainId)
+	record.PendingEvents = test.retriedOnce(record.PendingEvents, nextAttemptAt)
+	stored, err := NotifyTestSetup{}.SummaryStore().InsertIfAbsent(record)
+	if err != nil {
+		panic(err)
+	}
+	return stored
+}
+
+func (test *OutboxRelayServiceTest) retriedOnce(texts []string, nextAttemptAt string) []string {
+	pending := test.pendingOf(texts)
+	pending[0].Attempts = test.earlierAttempts()
+	pending[0].NextAttemptAt = nextAttemptAt
+	encoded, err := outbox.Codec{}.EncodePending(pending)
+	if err != nil {
+		panic(err)
+	}
+	return encoded
+}
+
+func (test *OutboxRelayServiceTest) pendingOf(texts []string) []outbox.PendingEvent {
+	pending, err := outbox.Codec{}.DecodePending(texts)
+	if err != nil {
+		panic(err)
+	}
+	return pending
+}
+
+func (test *OutboxRelayServiceTest) sweepUntilPushed(relay *OutboxRelayService, authorization string, pusher *outbox.RecordingPusher, records []SummaryRecord) error {
+	failures := []error{}
+	for round := 0; round < test.relayRounds(); round++ {
+		_, failure := relay.RunOnce(authorization)
+		failures = append(failures, failure)
+		if test.pushedCount(pusher, records) == len(records) {
+			break
+		}
+	}
+	return errors.Join(failures...)
+}
+
+func (test *OutboxRelayServiceTest) pushedCount(pusher *outbox.RecordingPusher, records []SummaryRecord) int {
+	pushed := map[string]bool{}
+	for _, envelope := range pusher.PushedTo(test.subscriberName()) {
+		pushed[envelope.EventID] = true
+	}
+	count := 0
+	for _, record := range records {
+		count += test.countIf(pushed[test.pendingOf(record.PendingEvents)[0].Envelope.EventID])
+	}
+	return count
+}
+
+func (test *OutboxRelayServiceTest) unchangedCount(records []SummaryRecord, nextAttemptAt string) int {
+	count := 0
+	for _, record := range records {
+		count += test.countIf(test.unchanged(record, nextAttemptAt))
+	}
+	return count
+}
+
+func (test *OutboxRelayServiceTest) unchanged(record SummaryRecord, nextAttemptAt string) bool {
+	ref := outbox.Ref{Collection: NotifyTestSetup{}.SummaryStore().Collection(record.DomainId), Id: record.Id}
+	fields, err := NotifyTestSetup{}.OutboxStore().Load(ref)
+	if err != nil {
+		return false
+	}
+	pending := test.pendingOf(fields.PendingEvents)
+	return len(pending) == 1 && pending[0].Attempts == test.earlierAttempts() && pending[0].NextAttemptAt == nextAttemptAt
+}
+
+func (*OutboxRelayServiceTest) countIf(matches bool) int {
+	if matches {
+		return 1
+	}
+	return 0
+}
+
+func (*OutboxRelayServiceTest) attemptTime(offset time.Duration) string {
+	return time.Now().UTC().Add(offset).Format(time.RFC3339Nano)
+}
+
+func (*OutboxRelayServiceTest) notDueCount() int {
+	return 26
+}
+
+func (*OutboxRelayServiceTest) earlierAttempts() int {
+	return 1
+}
+
+func (*OutboxRelayServiceTest) subscriberName() string {
+	return "mail-out"
 }

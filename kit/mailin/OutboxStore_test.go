@@ -17,41 +17,27 @@ func seededStore(t *testing.T) (*memoryDocuments, OutboxStore) {
 	return memory, store
 }
 
-func TestPendingKeepsWaitingRowsUpToTheLimit(t *testing.T) {
+func TestWaitingKeepsEveryWaitingRow(t *testing.T) {
 	_, store := seededStore(t)
-	all, err := store.Pending(10)
-	limited, _ := store.Pending(1)
-	check(t, err == nil, "pending failed")
-	check(t, len(all) == 2, "want two waiting rows")
-	check(t, len(limited) == 1 && limited[0].Ref.Id == "D2", "want the first waiting row")
+	all, err := store.Waiting()
+	check(t, err == nil, "waiting failed")
+	check(t, len(all) == 2 && all[0].Ref.Id == "D2", "want two waiting rows")
 }
 
-func TestPendingStopsReadingAtTheLimit(t *testing.T) {
+func TestWaitingReadsEveryCollection(t *testing.T) {
 	memory, store := seededStore(t)
 	memory.storage().Ensure("inbound-raw-b")
 	store.Registry.Register("inbound-raw-b")
 	memory.storage().Insert("inbound-raw-b", outbox.Fields{OutboxPending: 1, OutboxWaiting: true})
-	memory.pageReads = map[string]int{}
-	limited, err := store.Pending(1)
-	check(t, err == nil && len(limited) == 1, "want one row")
-	check(t, memory.pageReads["inbound-raw-a"] == 1, "want one page of the first collection")
-	check(t, memory.pageReads["inbound-raw-b"] == 0, "the second collection was read")
+	waiting, err := store.Waiting()
+	check(t, err == nil && len(waiting) == 3, "want three rows")
+	check(t, waiting[2].Ref == outbox.Ref{Collection: "inbound-raw-b", Id: "D1"}, "want the row of the second collection")
 }
 
-func TestPendingReadsTheNextCollectionUntilTheLimit(t *testing.T) {
-	memory, store := seededStore(t)
-	memory.storage().Ensure("inbound-raw-b")
-	store.Registry.Register("inbound-raw-b")
-	memory.storage().Insert("inbound-raw-b", outbox.Fields{OutboxPending: 1, OutboxWaiting: true})
-	pending, err := store.Pending(3)
-	check(t, err == nil && len(pending) == 3, "want three rows")
-	check(t, pending[2].Ref == outbox.Ref{Collection: "inbound-raw-b", Id: "D1"}, "want the row of the second collection")
-}
-
-func TestPendingIgnoresRowsWithoutTheFlag(t *testing.T) {
+func TestWaitingIgnoresRowsWithoutTheFlag(t *testing.T) {
 	memory, store := seededStore(t)
 	memory.storage().Insert("inbound-raw-a", OutboxRow{Fields: outbox.Fields{OutboxPending: 1}})
-	pending, err := store.Pending(10)
+	pending, err := store.Waiting()
 	check(t, err == nil && len(pending) == 2, "want only the flagged rows")
 }
 
@@ -63,26 +49,26 @@ func TestDeadKeepsRowsWithDeadLetters(t *testing.T) {
 	check(t, dead[0].Fields.OutboxDead == 1, "wrong fields")
 }
 
-func TestPendingReportsAFailedRegistry(t *testing.T) {
+func TestWaitingReportsAFailedRegistry(t *testing.T) {
 	memory, store := seededStore(t)
 	memory.failOn = "page"
-	documents, err := store.Pending(10)
+	documents, err := store.Waiting()
 	check(t, err != nil && len(documents) == 0, "want an error and no rows")
 }
 
-func TestPendingSurvivesARegisteredCollectionThatIsMissing(t *testing.T) {
+func TestWaitingSurvivesARegisteredCollectionThatIsMissing(t *testing.T) {
 	memory, store := seededStore(t)
 	store.Registry.Register("inbound-raw-missing")
-	documents, err := store.Pending(10)
+	documents, err := store.Waiting()
 	check(t, err == nil && len(documents) == 2, "the sweep failed")
 	check(t, memory.created == 3, "the missing collection was not created")
 }
 
-func TestPendingReportsACollectionThatCannotBeCreated(t *testing.T) {
+func TestWaitingReportsACollectionThatCannotBeCreated(t *testing.T) {
 	memory, store := seededStore(t)
 	store.Registry.Register("inbound-raw-missing")
 	memory.failOn = "create"
-	documents, err := store.Pending(10)
+	documents, err := store.Waiting()
 	check(t, isUnavailable(err, "create collection"), "want create collection")
 	check(t, len(documents) == 2, "want the readable rows")
 }

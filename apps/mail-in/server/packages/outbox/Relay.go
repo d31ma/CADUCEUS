@@ -18,22 +18,24 @@ func NewRelay(store Store, pusher Pusher, settings Settings, now func() time.Tim
 }
 
 func (relay Relay) RunOnce(limit int) (Report, error) {
-	documents, err := relay.store.Pending(limit)
+	due, err := relay.dueDocuments()
 	if err != nil {
 		return Report{}, err
 	}
-	report, failed := relay.relayAll(documents)
-	report.More = len(documents) >= limit
+	taken := relay.first(due, limit)
+	report, failed := relay.relayAll(taken)
+	report.More = len(due) > len(taken)
 	return report, failed
 }
 
 func (relay Relay) RunWithin(limit int, budget time.Duration) (Report, error) {
-	documents, err := relay.store.Pending(limit)
+	due, err := relay.dueDocuments()
 	if err != nil {
 		return Report{}, err
 	}
-	report, failed := relay.relayUntil(documents, relay.now().Add(budget))
-	report.More = relay.more(report, len(documents), limit)
+	taken := relay.first(due, limit)
+	report, failed := relay.relayUntil(taken, relay.now().Add(budget))
+	report.More = relay.more(report, len(due), len(taken))
 	return report, failed
 }
 
@@ -51,6 +53,15 @@ func (relay Relay) relayLoaded(ref Ref, newRun func([]PendingEvent) *documentRun
 		return Report{}, err
 	}
 	return relay.relayWith(Document{Ref: ref, Fields: fields}, newRun)
+}
+
+func (relay Relay) dueDocuments() ([]Document, error) {
+	documents, err := relay.store.Waiting()
+	return DueOrder{}.Due(documents, relay.now()), err
+}
+
+func (Relay) first(documents []Document, limit int) []Document {
+	return documents[:min(len(documents), max(limit, 0))]
 }
 
 func (relay Relay) relayAll(documents []Document) (Report, error) {
@@ -82,8 +93,8 @@ func (relay Relay) relayBefore(document Document, deadline time.Time) (Report, e
 	return relay.relayOne(document)
 }
 
-func (Relay) more(report Report, found int, limit int) bool {
-	return report.More || found >= limit
+func (Relay) more(report Report, due int, taken int) bool {
+	return report.More || due > taken
 }
 
 func (relay Relay) relayOne(document Document) (Report, error) {
@@ -96,15 +107,26 @@ func (relay Relay) relayWith(document Document, newRun func([]PendingEvent) *doc
 		return Report{}, err
 	}
 	outcome := newRun(state.Pending).deliver(state.Pending)
-	fresh, err := relay.store.Load(document.Ref)
+	return outcome.report, relay.saveIfAttempted(document.Ref, outcome)
+}
+
+func (relay Relay) saveIfAttempted(ref Ref, outcome runOutcome) error {
+	if !outcome.attempted() {
+		return nil
+	}
+	return relay.save(ref, outcome)
+}
+
+func (relay Relay) save(ref Ref, outcome runOutcome) error {
+	fresh, err := relay.store.Load(ref)
 	if err != nil {
-		return outcome.report, err
+		return err
 	}
 	merged, err := merge{outcome: outcome}.apply(fresh)
 	if err != nil {
-		return outcome.report, err
+		return err
 	}
-	return outcome.report, relay.store.Save(document.Ref, merged)
+	return relay.store.Save(ref, merged)
 }
 
 func (relay Relay) directRun(pending []PendingEvent) *documentRun {

@@ -43,8 +43,8 @@ func (service *OutboxRelayService) Retry(request RetryRequest) error {
 
 func (service *OutboxRelayService) relay(settings outbox.Settings, domainId string) outbox.Relay {
 	pusher := outbox.NewHTTPPusher(DomainServiceToken{DomainId: domainId}, outbox.HTTPPusher{}.DefaultTimeout())
-	pending := func(limit int) ([]outbox.Document, error) { return service.store.PendingIn(domainId, limit) }
-	store := OutboxStore{PendingOf: pending, LoadOf: service.store.Load, SaveOf: service.store.Save}
+	waiting := func() ([]outbox.Document, error) { return service.store.WaitingIn(domainId) }
+	store := OutboxStore{WaitingOf: waiting, LoadOf: service.store.Load, SaveOf: service.store.Save}
 	return outbox.NewRelay(store, pusher, settings, time.Now)
 }
 

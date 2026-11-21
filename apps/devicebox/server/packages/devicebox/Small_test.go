@@ -79,7 +79,7 @@ func TestStoreAndCountsPassStorageFailuresOn(t *testing.T) {
 	if _, err := NewBoxCounts(NewDocuments(brokenStorage{})).Add("example.com", map[string]int{DeviceKey{}.Of("b1"): 1}); err == nil {
 		t.Fatal("want a failure")
 	}
-	if _, err := NewOutboxStore(NewDocuments(brokenStorage{})).Pending(5); err == nil {
+	if _, err := NewOutboxStore(NewDocuments(brokenStorage{})).Waiting(); err == nil {
 		t.Fatal("want a failure")
 	}
 	if _, err := NewOutboxStore(NewDocuments(brokenStorage{})).Load(outbox.Ref{Collection: "c", Id: "X"}); err == nil {

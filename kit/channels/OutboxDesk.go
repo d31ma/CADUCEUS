@@ -32,8 +32,8 @@ func (desk OutboxDesk) Drain(collection string, id string) {
 }
 
 func (desk OutboxDesk) Waiting() (int, error) {
-	documents, err := desk.store.Pending(desk.waitingLimit())
-	return len(documents), err
+	documents, err := desk.store.Waiting()
+	return min(len(documents), desk.waitingLimit()), err
 }
 
 func (desk OutboxDesk) DeadEvents() ([]DeadEvent, error) {

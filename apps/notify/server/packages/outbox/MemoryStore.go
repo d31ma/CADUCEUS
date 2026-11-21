@@ -4,6 +4,7 @@ type MemoryStore struct {
 	documents map[Ref]Fields
 	order     []Ref
 	failures  map[string]error
+	saves     int
 }
 
 func NewMemoryStore() *MemoryStore {
@@ -26,17 +27,20 @@ func (store *MemoryStore) FailNextLoad(err error) {
 	store.failures[store.loadOperation()] = err
 }
 
-func (store *MemoryStore) FailNextPending(err error) {
-	store.failures[store.pendingOperation()] = err
+func (store *MemoryStore) FailNextWaiting(err error) {
+	store.failures[store.waitingOperation()] = err
 }
 
-func (store *MemoryStore) Pending(limit int) ([]Document, error) {
-	err := store.takeFailure(store.pendingOperation())
+func (store *MemoryStore) Saves() int {
+	return store.saves
+}
+
+func (store *MemoryStore) Waiting() ([]Document, error) {
+	err := store.takeFailure(store.waitingOperation())
 	if err != nil {
 		return nil, err
 	}
-	refs := store.pendingRefs()
-	return store.documentsOf(refs[:max(0, min(limit, len(refs)))]), nil
+	return store.documentsOf(store.waitingRefs()), nil
 }
 
 func (store *MemoryStore) Load(ref Ref) (Fields, error) {
@@ -52,6 +56,7 @@ func (store *MemoryStore) Save(ref Ref, fields Fields) error {
 	if err != nil {
 		return err
 	}
+	store.saves += 1
 	store.write(ref, fields)
 	return nil
 }
@@ -62,15 +67,15 @@ func (store *MemoryStore) takeFailure(operation string) error {
 	return err
 }
 
-func (store *MemoryStore) pendingRefs() []Ref {
+func (store *MemoryStore) waitingRefs() []Ref {
 	refs := []Ref{}
 	for _, ref := range store.order {
-		refs = append(refs, store.ifPending(ref)...)
+		refs = append(refs, store.ifWaiting(ref)...)
 	}
 	return refs
 }
 
-func (store *MemoryStore) ifPending(ref Ref) []Ref {
+func (store *MemoryStore) ifWaiting(ref Ref) []Ref {
 	if !store.documents[ref].OutboxWaiting {
 		return []Ref{}
 	}
@@ -109,8 +114,8 @@ func (MemoryStore) loadOperation() string {
 	return "load"
 }
 
-func (MemoryStore) pendingOperation() string {
-	return "pending"
+func (MemoryStore) waitingOperation() string {
+	return "waiting"
 }
 
 func (MemoryStore) documentKind() string {

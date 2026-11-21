@@ -35,7 +35,7 @@ func TestEachCollectionIsCheckedAndCreatedOnceForManyPuts(t *testing.T) {
 	w.directory.Owns(w.domain, "ana", "a1")
 	w.directory.Owns(w.domain, "bo", "b1")
 	putMany(w, 5)
-	_, pendingErr := w.desk.store.Pending(10)
+	_, pendingErr := w.desk.store.Waiting()
 	names := Names{}
 	collections := []string{names.Slips(w.domain), names.Bodies(w.domain), names.Counts(w.domain), names.Registry()}
 	if pendingErr != nil || len(w.list("bo", "b1").Envelopes) != 5 {

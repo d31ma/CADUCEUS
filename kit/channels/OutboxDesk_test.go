@@ -109,19 +109,19 @@ func TestTheRegistryRefusesAnUnknownCollectionAndKeepsEachNameOnce(t *testing.T)
 	wantEqual(t, names, []string{"notes"})
 }
 
-func TestPendingReturnsAtMostTheLimit(t *testing.T) {
+func TestWaitingListsEveryWaitingDocument(t *testing.T) {
 	w := newWorld(t)
 	w.pusher.FailFor("messaging", errors.New("messaging is down"))
 	w.create("Bearer ana", "general", "public")
-	pending, err := NewOutboxStore(w.documents).Pending(1)
+	waiting, err := NewOutboxStore(w.documents).Waiting()
 	wantNoError(t, err)
-	wantEqual(t, len(pending), 1)
+	wantEqual(t, len(waiting), 2)
 }
 
 func TestARegisteredCollectionThatIsMissingFailsTheSweep(t *testing.T) {
 	w := newWorld(t)
 	w.must(NewRegistry(w.documents).Register("ghost"))
-	_, pendingErr := NewOutboxStore(w.documents).Pending(10)
+	_, pendingErr := NewOutboxStore(w.documents).Waiting()
 	_, runErr := w.desk.RunOnce()
 	wantTrue(t, pendingErr != nil, "a missing collection was read")
 	wantTrue(t, runErr != nil, "the sweep ignored a missing collection")
@@ -133,7 +133,7 @@ func TestADocumentFlaggedWithoutEventsIsNotPendingOrDead(t *testing.T) {
 	w.must(w.documents.Ensure("notes"))
 	_, err := w.documents.Insert("notes", OutboxRow{OutboxWaiting: true, OutboxHasDead: true})
 	w.must(err)
-	pending, pendingErr := NewOutboxStore(w.documents).Pending(10)
+	pending, pendingErr := NewOutboxStore(w.documents).Waiting()
 	dead, deadErr := NewOutboxStore(w.documents).Dead()
 	wantNoError(t, pendingErr)
 	wantNoError(t, deadErr)

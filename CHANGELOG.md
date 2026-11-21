@@ -15,6 +15,13 @@
   `MESAIL_FYLO_TRACE=1` (test images only, off by default) a `fylo` wrapper
   logs each start and fylo's stderr in the container, and each container
   keeps a tar of its root from before the app started.
+  Three choices differ from the slice brief: in the dev host `down.sh`
+  stops the `smtp` container and never removes it (it removes it only
+  with `MESAIL_VM=colima`); fylo is timed on a scratch root in its own
+  kept Docker volume `mesail-op8-capture`, never in the app's EFS volume,
+  which is mounted read-only; and the 3000 sign-in default applies only
+  to the Floci stack, because `scripts/native/run-all.sh` loads the same
+  settings and keeps 1000.
 
 - Outbox sweeps take only due documents, oldest due first (slice K20).
   After a subscriber outage, documents waiting in backoff no longer fill

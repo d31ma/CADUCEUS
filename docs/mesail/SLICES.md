@@ -2904,6 +2904,33 @@ Found by the nightly on develop 8b824749 (failed 11-16 to 11-21).
 - **Done when:** `scripts/gates.sh --shared-only` and one app pass; the
   image test passes all checks and leaves no image attached.
 
+### K24. One outbox drain budget per request (backlog, about half a day; not a release blocker)
+Found by K22 (2026-11-21): ana's development seed waits 4.9-8.5 s, because
+directory drains its outbox once per member document it writes, and each
+drain may take up to 3 s (EVENTS.md section 4, items 3 and 6; slice K7).
+- **Why it is backlog, not a fix now:** drain on write with a 3 s budget
+  per written document is the decided design. It is not on the sign-in
+  path: identity only reads the person (`GET /directory/people/{id}`), and
+  `sessions-ended` saves only the person document, with no drain. It is not
+  MS1048 either: MS1048 is a store call over 5 s, and a drain is an HTTP
+  push, not a store call. The routes that wait for several drains are admin
+  writes (changing a person drains once per domain) and the
+  development-only seed, all under the router's 70 s.
+- **Builds, when taken:** one drain deadline per request instead of 3 s per
+  document. `kit/outbox` gets `Relay.RelayDocumentUntil(ref, deadline)`, and
+  `RelayDocument(ref)` stays as now plus 3 s. directory's seed join loop and
+  `PersonService.Change` -> `MirrorAll` take one deadline at the start and
+  pass it through `MemberWriterService`. A write after the deadline skips
+  the drain, and the relay sweep delivers its events. channels'
+  `POST /channels` does the same. EVENTS.md item 6 then says "at most 3 s
+  per request".
+- **Not this:** delivering after the answer. On real Lambda the container
+  stops running after the answer, and the outbox result would be written
+  after the request, beside the next request's store calls.
+- **Done when:** kit tests cover the deadline; a directory test shows that a
+  person in 3 domains with a slow subscriber is answered in about 3 s;
+  `scripts/kit-sync.sh --check` passes.
+
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 
 Wave 10 (J0 to J5: Floci SQS and SNS for events, EventBridge Scheduler

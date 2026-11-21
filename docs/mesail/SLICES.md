@@ -1933,18 +1933,21 @@ Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
      describes for the blob folder), saved as `root-after.tar`; with the
      build argument on, also the start snapshot and the trace logs from
      the stopped container with `docker cp` (see the next point);
-  3. time `fylo` on a scratch copy of the root (`/mnt/data/capture-<time>`,
-     made from the start snapshot when there is one, else from
-     `root-after.tar`; the times name which one),
-     with the owner file under the copy's name) with no time limit: the
-     same `fylo` binary (a one-shot container from the app's image), the
-     same profile (`efs-sidecar-v1`, or `--exclusive-root` if the app uses
-     it), the same encryption key passed as the stack passes it (never
-     printed, logged or stored), the same root layout, on Linux ext4 in the
-     dev host; time start plus handshake apart from the failed request's
+  3. time `fylo` on a copy of the root (made from the start snapshot when
+     there is one, else from `root-after.tar`; the times name which one)
+     with no time limit, in a one-shot container from the app's image (the
+     same `fylo` binary) started with `--rm` and an anonymous volume at
+     `/mnt/data`, so the copy keeps the same layout and names
+     (`/mnt/data/<service>` with its owner files beside it) and Docker
+     deletes it with the container; on Linux ext4 in the dev host. Start
+     `fylo` with the same command line TACHYON uses: with 26.46.02 that is
+     `fylo exec --loop --root <root> --max-request-bytes 1048576
+     --max-response-bytes 8388608`, with no profile, no `--exclusive-root`
+     and no key (read it again from the TACHYON source when the pin
+     changes). Time start plus handshake apart from the failed request's
      real store steps in order (for the directory seed: read `local-parts`,
-     write `local-parts`, find in `people`, write `people`); write the times
-     and fylo's stderr to `timing.txt`; then remove only the scratch copy;
+     write `local-parts`, find in `people`, write `people`), and write the
+     times and fylo's stderr to `timing.txt`;
   4. only then start the scheduler again and retry.
   The tars stay on the Mac until FYLO says they can go, and the run log
   names the capture folder.

@@ -175,12 +175,32 @@ capture_test_other_error() {
   capture_test_expect_contains "other numbers still retry" "retry 1 of 3" "$work/seed.log"
 }
 
+capture_test_native_run() {
+  local work="$1/native"
+  capture_test_setup "$work"
+  rm -f "$work/logs/compose-profile"
+  capture_test_run_seed "$work" 1
+  if grep -q 'docker' "$work/calls.log" 2> /dev/null; then capture_test_fail "no capture in the native run" "docker was called"; fi
+  capture_test_expect_contains "native run says why" "capture: only in the Floci stack" "$work/seed.log"
+}
+
+capture_test_native_limit() {
+  local limit
+  # shellcheck disable=SC2016
+  limit="$(env -u MESAIL_ROUTER_RATE_LIMIT MESAIL_GOCACHE="$1/gocache" MESAIL_LOG_DIR="$1/limit" bash -c \
+    '. "$1/common.sh"; mesail_load_settings > /dev/null; echo "${MESAIL_ROUTER_RATE_LIMIT:-unset}"' _ "$(capture_test_folder)")"
+  if [ "$limit" != unset ]; then capture_test_fail "native limit unchanged" "mesail_load_settings set $limit"; fi
+  echo "ok   the 3000 sign-in limit is for the Floci stack only"
+}
+
 main() {
   local work
   work="$(mktemp -d "${TMPDIR:-/tmp}/mesail-capture-test.XXXXXX")"
   capture_test_capture_before_retry "$work"
   capture_test_all_fail "$work"
   capture_test_other_error "$work"
+  capture_test_native_run "$work"
+  capture_test_native_limit "$work"
   rm -rf "$work"
   echo "capture_test: all passed"
 }

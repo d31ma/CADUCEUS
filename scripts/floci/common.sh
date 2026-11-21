@@ -30,7 +30,6 @@ mesail_load_settings() {
   export MESAIL_ROUTER_URL="${MESAIL_ROUTER_URL:-http://127.0.0.1:$MESAIL_ROUTER_PORT}"
   export MESAIL_IMAGE_TAG="${MESAIL_IMAGE_TAG:-dev}"
   export MESAIL_SMTP_PORT="${MESAIL_SMTP_PORT:-$(mesail_stack .smtp.port)}"
-  export MESAIL_ROUTER_RATE_LIMIT="${MESAIL_ROUTER_RATE_LIMIT:-$(mesail_stack .routerRateLimit)}"
   export MESAIL_FYLO_TRACE="${MESAIL_FYLO_TRACE:-0}"
   export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 AWS_PAGER=""
   unset AWS_PROFILE AWS_SESSION_TOKEN
@@ -131,6 +130,7 @@ mesail_load_compose_settings() {
   MESAIL_DEV_DNS_SPF="$(mesail_directory_setting spfmechanism)"
   export MESAIL_SINGLE_WRITERS MESAIL_SCHEDULER_PATHS MESAIL_DAILY_SCHEDULER_PATHS MESAIL_SCHEDULER_SECONDS
   export MESAIL_DEV_DNS_DOMAINS MESAIL_DEV_DNS_MAIL_HOST MESAIL_DEV_DNS_SPF
+  export MESAIL_ROUTER_RATE_LIMIT="${MESAIL_ROUTER_RATE_LIMIT:-$(mesail_stack .routerRateLimit)}"
 }
 
 mesail_dotted() {
@@ -247,6 +247,7 @@ mesail_capture_before_retry() {
   local service="$1" result="$2" number
   number="$(mesail_answer_number "$result")"
   if ! mesail_store_unavailable "$service" "$number"; then return 0; fi
+  if [ ! -f "$(mesail_log_dir)/compose-profile" ]; then echo "capture: only in the Floci stack, so $service is not captured"; return 0; fi
   if [ -e "$(mesail_capture_done_file "$service")" ]; then echo "capture: $service was captured already in this run"; return 0; fi
   touch "$(mesail_capture_done_file "$service")"
   "$(mesail_root)/scripts/floci/capture.sh" "$service" "$number" || echo "warning: the capture of $service failed (see above); retrying anyway"

@@ -3074,10 +3074,34 @@ warm-up; C later).
   - the first call is NOT SLOWER with the warm-up than without it: two cold runs after a cache clear, one with `MESAIL_FYLO_WARM=0` and one with the warm-up on, each recording the first store call's `wait_ms` and `call_ms` and the time to the first answer. If the warm-up run is slower, try a warm-up that starts after the first request, or one that reads with a lower I/O priority (`ionice -c3`), before giving up on the background design.
 
 ## Open before the production release
-Decisions that are open on purpose. Each one is raised through the hub
-before Mesail's first production release on kestrel; none of them blocks
-work on `develop` today. Release blockers for the code itself are marked
-in their slices (for example K27).
+Everything that must be done or decided before Mesail's first production
+release on kestrel, as one-line pointers; the details live in the slices
+and notes named. None of them blocks work on `develop` today. Decisions are
+raised through the hub.
+
+Release blockers:
+- **MS1048 on a fresh FYLO container:** fixed by the TACHYON release with
+  TAC-ST2 (store-time deadline per answer, start-up allowance, clean fylo
+  stop, no hard 5 s limit in the Go prelude). Mesail moves to it in one
+  pin-bump slice (`tachyon-st2-pin-bump-notes.md` in the MESAIL Build
+  Coordinator's notes: rebuild every image,
+  `TAC_SHUTDOWN_GRACE_SECONDS=5`, ADR 0128's new meaning of `timeout`),
+  and K22 phase 2 proves it on Floci.
+- **K27:** no in-function `@Schedule` workers in the Lambda profile.
+- **Dependencies tested on their `develop` (the release rule):** Mesail
+  tests each dependency's `develop` build before that dependency's release,
+  then moves to the release:
+  - FYLO: K17a (the devicebox test's system-disk opt-out) is merged
+    (c4abfa9b). Left: Mesail's release test on FYLO's frozen release
+    commit F; FYLO-R1 builds `fylo` at F and sends its paths and SHA-256
+    through the MESAIL Build Coordinator to a Mesail session that runs it;
+  - TACHYON `develop`: K22 phase 2 on the TAC-ST2 branch, and again on
+    `develop` after TAC-ST2 merges;
+  - DuVay: DT3 tested d977477 (no new bug); DT4 retests e08ae67 (the
+    w-menu fix, DUVAY-11). K26's contrast fix does not wait for DuVay's
+    release.
+
+Open decisions:
 - **Production FYLO data placement on kestrel: open** (the user,
   2026-11-21: "Decide later"). Raise it through the hub before the
   production release, with K22's numbers after TAC-ST2 and FYLO-CR1. ADR

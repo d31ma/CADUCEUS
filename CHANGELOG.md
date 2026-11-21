@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- The FYLO test image moved from ATLAS to the local HANGAR SSD (slice K25).
+  ATLAS holds production data only; the image went read-only twice over
+  NFS (2026-11-16 and 2026-11-21) and broke the nightly runs.
+  `scripts/fylo-image.sh` now attaches
+  `/Volumes/HANGAR/mesail-test/mesail-fylo-test.sparsebundle` by default
+  (`MESAIL_FYLO_IMAGE` still overrides it), at the same mount point
+  `~/Developer/AtlasFylo/mesail`, so every slice's `.env` stays valid.
+  The K21 guards are unchanged: a mounted image that cannot be written stops
+  the gate, and an image with I/O errors is re-attached only under the lock
+  and only when nothing uses it. A missing image now asks whether the
+  HANGAR SSD is plugged in. `scripts/native/run-all.sh` names the new path
+  in its attach hint. HANGAR is not backed up: the image holds test data
+  only.
+
 - The Floci test stack runs the SMTP edge (slice OP8): `edge/smtp` gets a
   `Dockerfile` target `smtp` and runs as the container `smtp` with the
   shared blob folder as `MESAIL_RAW_STORE_DIR`, on `127.0.0.1:12525`, so

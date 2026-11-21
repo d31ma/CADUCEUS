@@ -111,12 +111,13 @@ wave run at the same time.
    realm name). Chat data never crosses a domain. Email
    crosses domains freely. See SPEC section 2 and DOMAIN.md invariant 1.
 12. **FYLO roots for dev and test.** On this Mac, a test FYLO root lives in
-    the shared APFS disk image on ATLAS, in your own folder:
+    the shared APFS disk image on the HANGAR SSD (on ATLAS until slice K25;
+    ATLAS holds production data only), in your own folder:
     `~/Developer/AtlasFylo/mesail/slice-<slice id>/` (for example
     `slice-m3/`). Never put a root on `/Volumes/ATLAS` or `/Volumes/HAVEN`
     directly (SMB; FYLO refuses it), and never detach the image: other
     sessions share it. If it is not attached, attach it (Bash sandbox off):
-    `diskutil image attach --mountOptions nobrowse --mountPoint ~/Developer/AtlasFylo/mesail /Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle`.
+    `diskutil image attach --mountOptions nobrowse --mountPoint ~/Developer/AtlasFylo/mesail /Volumes/HANGAR/mesail-test/mesail-fylo-test.sparsebundle`.
     **How `ty test` finds the root** (agreed with slice C1): no `datasource`
     in the committed `server/application.json`; a committed
     `apps/<app>/.env.example` shows the format, and a local, ignored

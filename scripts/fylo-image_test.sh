@@ -74,7 +74,7 @@ fylo_image_test_two_gates_at_once() {
   fylo_image_test_expect_no_lock "the lock is released after two gates"
 }
 
-fylo_image_test_dead_atlas() {
+fylo_image_test_dead_hangar() {
   local work="$1" started finished status
   fylo_image_test_detach
   started="$(date +%s)"
@@ -83,11 +83,11 @@ fylo_image_test_dead_atlas() {
     mesail_fylo_image_ready 2> "$work/dead.err" )
   status=$?
   finished="$(date +%s)"
-  fylo_image_test_expect_status "a dead ATLAS fails" 1 "$status"
-  fylo_image_test_expect_contains "a dead ATLAS is reported" "did not answer within 1 s" "$work/dead.err"
-  fylo_image_test_expect_contains "a dead ATLAS names the fix" "is ATLAS mounted from CITADEL?" "$work/dead.err"
-  fylo_image_test_expect_at_most "a dead ATLAS does not hold the run" 3 "$((finished - started))"
-  fylo_image_test_expect_no_lock "the lock is released after a dead ATLAS"
+  fylo_image_test_expect_status "a dead HANGAR fails" 1 "$status"
+  fylo_image_test_expect_contains "a dead HANGAR is reported" "did not answer within 1 s" "$work/dead.err"
+  fylo_image_test_expect_contains "a dead HANGAR names the fix" "is the HANGAR SSD plugged in?" "$work/dead.err"
+  fylo_image_test_expect_at_most "a dead HANGAR does not hold the run" 3 "$((finished - started))"
+  fylo_image_test_expect_no_lock "the lock is released after a dead HANGAR"
 }
 
 fylo_image_test_attach_read_only() {
@@ -126,7 +126,7 @@ fylo_image_test_reattaches_after_io_error() {
     mesail_fylo_image_ready 2> "$work/io-error.err" )
   status=$?
   fylo_image_test_expect_status "an unused image with I/O errors is fixed" 0 "$status"
-  fylo_image_test_expect_contains "the re-attach is reported" "gives I/O errors (old NFS handles) and nothing uses it" "$work/io-error.err"
+  fylo_image_test_expect_contains "the re-attach is reported" "gives I/O errors (old file handles) and nothing uses it" "$work/io-error.err"
   fylo_image_test_expect_contains "the image is attached again" "=== fylo image: attaching" "$work/io-error.err"
   fylo_image_test_expect_status "the image is writable after the re-attach" 0 "$(fylo_image_test_writable; echo $?)"
   fylo_image_test_expect_no_lock "the lock is released after the re-attach"
@@ -193,7 +193,7 @@ fylo_image_test_main() {
   fylo_image_test_reattaches_after_io_error "$work"
   fylo_image_test_stops_after_io_error_when_busy "$work"
   fylo_image_test_stops_when_attached_read_only "$work"
-  fylo_image_test_dead_atlas "$work"
+  fylo_image_test_dead_hangar "$work"
   fylo_image_test_missing_image_file "$work"
   echo "fylo-image: all checks passed"
 }

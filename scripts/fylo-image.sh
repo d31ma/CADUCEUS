@@ -8,7 +8,7 @@ mesail_fylo_image_mount_point() {
 }
 
 mesail_fylo_image_file() {
-  echo "${MESAIL_FYLO_IMAGE:-/Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle}"
+  echo "${MESAIL_FYLO_IMAGE:-/Volumes/HANGAR/mesail-test/mesail-fylo-test.sparsebundle}"
 }
 
 mesail_fylo_image_lock() {
@@ -56,7 +56,7 @@ mesail_fylo_image_reachable() {
   local image
   image="$(mesail_fylo_image_file)"
   if mesail_finishes_within "$(mesail_fylo_image_check_seconds)" "the FYLO test image $image" mesail_fylo_image_present "$image"; then return 0; fi
-  echo "=== fylo image: $image cannot be read (is ATLAS mounted from CITADEL?)" >&2
+  echo "=== fylo image: $image cannot be read (is the HANGAR SSD plugged in?)" >&2
   return 1
 }
 
@@ -118,7 +118,7 @@ mesail_fylo_image_explain_users() {
   local status="$1" users="$2" mount_point
   if [ "$status" -eq 1 ]; then return 0; fi
   mount_point="$(mesail_fylo_image_mount_point)"
-  echo "=== fylo image: $mount_point gives I/O errors (old NFS handles) but is in use (or lsof did not answer), so it is not re-attached; stop these processes, run: hdiutil detach $mount_point, then rerun the gate" >&2
+  echo "=== fylo image: $mount_point gives I/O errors (old file handles) but is in use (or lsof did not answer), so it is not re-attached; stop these processes, run: hdiutil detach $mount_point, then rerun the gate" >&2
   sed 's/^/    /' "$users" >&2
   return 1
 }
@@ -142,7 +142,7 @@ mesail_fylo_image_run_detach() {
 mesail_fylo_image_detach_broken() {
   local mount_point
   mount_point="$(mesail_fylo_image_mount_point)"
-  echo "=== fylo image: $mount_point gives I/O errors (old NFS handles) and nothing uses it, so it is detached and attached again" >&2
+  echo "=== fylo image: $mount_point gives I/O errors (old file handles) and nothing uses it, so it is detached and attached again" >&2
   mesail_finishes_within "$(mesail_fylo_image_attach_seconds)" "hdiutil detach of $mount_point" mesail_fylo_image_run_detach "$mount_point"
 }
 

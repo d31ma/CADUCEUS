@@ -88,7 +88,7 @@ heavy_job() {
 check_atlas_image() {
   if mount | grep -q " on $(atlas_image) "; then return 0; fi
   echo "The FYLO test image is not attached. Attach it (it is shared; never detach it):"
-  echo "  diskutil image attach --mountOptions nobrowse --mountPoint $(atlas_image) /Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle"
+  echo "  diskutil image attach --mountOptions nobrowse --mountPoint $(atlas_image) /Volumes/HANGAR/mesail-test/mesail-fylo-test.sparsebundle"
   return 1
 }
 

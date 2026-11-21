@@ -267,8 +267,9 @@ Decisions:
     responsive because `messaging` writes one document per message.
   - **Snapshots.** `fylo pack` of every root to `.vdbx` files on ATLAS
     before every deploy, so a deploy can roll back.
-  On this Mac, native development uses the APFS disk image on ATLAS (about
-  2 ms writes), so slice tests are not slowed down.
+  On this Mac, native development uses an APFS disk image (about 2 ms
+  writes; on ATLAS until slice K25, on the local HANGAR SSD since, because
+  ATLAS holds production data only), so slice tests are not slowed down.
 - **Realtime is the exception.** `realtime` holds open connections, which a
   Lambda cannot do. In the first release it runs as one small long-running
   container (`ty start`) everywhere (the owner's decision). The serverless
@@ -492,7 +493,8 @@ already combines DuVay and Tailwind (`website/client/manifest.json`,
 
 - **This Mac, development and slice tests:** native macOS, no VM. Each Yon
   app runs with `ty start` behind a small native dev router on one origin;
-  FYLO roots are in the APFS disk image on ATLAS, attached at
+  FYLO roots are in the APFS disk image on the HANGAR SSD (on ATLAS until
+  slice K25), attached at
   `~/Developer/AtlasFylo/mesail` (one folder per slice); Keycloak runs
   natively when a test needs a real token.
 - **This Mac, integration:** every Yon service as a Lambda in Floci inside

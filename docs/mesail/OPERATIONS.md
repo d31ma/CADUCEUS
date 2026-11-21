@@ -278,6 +278,20 @@ the old as previous, restart, then remove the previous value.
   one takes calls, and never runs two containers of one FYLO-owning
   function at the same time. A second container would get `EROOTLOCKED`
   on every store call ("store is not available").
+- FYLO's file-system profile: Mesail uses fylo's native profile everywhere,
+  production included. Mesail runs on-premise, and Floci's "EFS" there is a
+  Docker volume on an ext4 disk, the same as on the dev host. TACHYON
+  26.46.02 starts `fylo exec --loop --root <root> --max-request-bytes
+  1048576 --max-response-bytes 8388608`, with no profile option, which
+  means native. The `efs-sidecar-v1` profile is only for real AWS EFS;
+  use it only if Mesail ever moves to real AWS EFS, and never on the dev
+  host. A profile setting is TACHYON backlog TAC-EFS1.
+- Stopping a FYLO function's container: TACHYON 26.46.02 ends `fylo` with
+  a kill on SIGTERM, so the next `fylo` on that root must recover any
+  write that was cut. The TACHYON release with TAC-ST2 closes `fylo`'s
+  input first (a clean stop); Mesail moves to it with
+  `TAC_SHUTDOWN_GRACE_SECONDS=5`, so the clean stop fits inside the 10
+  seconds that Docker and Floci give before SIGKILL.
 
 ## 7. Backups and restore
 

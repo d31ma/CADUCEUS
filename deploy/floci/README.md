@@ -550,13 +550,17 @@ or other call to that app:
    10001, with only the app's `FYLO_` variables (values never printed),
    unpacks the start snapshot (or `root-after.tar` when there is none; the
    first line says which) into a scratch root `/mnt/data/capture-<HHMMSS>`
-   with the owner files under that name, starts the real fylo with
+   with the owner files under that name, in its own Docker volume
+   `mesail-op8-capture` (`stack.json` `captureVolume`, on the dev host's
+   ext4 data disk; never a new root in the app's volume, which is only
+   mounted read-only), starts the real fylo with
    TACHYON 26.46.02's options (`exec --loop --root ... --max-request-bytes
    1048576 --max-response-bytes 8388608`) with no 5 s limit (10 minutes per
    answer), and times start plus handshake apart from the failed request's
    store steps in order (`stack.json` `captureSteps`; for `directory`: read
    `local-parts`, write `local-parts`, find in `people`, write `people`),
-   then fylo's stderr. It removes only the scratch root.
+   then fylo's stderr. It removes only the scratch root; the volume stays
+   (no script removes dev host volumes).
 4. `docker compose start` the scheduler services again; then the retry.
 
 The tars stay on the Mac until FYLO says they can go (dev test data only).

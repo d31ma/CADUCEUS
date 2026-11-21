@@ -14,8 +14,9 @@ example MS1048), BEFORE any retry or other call to that app
   2. writes <log dir>/capture-<time>/: containers.txt, fylo-trace/ (the start
      snapshot and trace logs, when the image has MESAIL_FYLO_TRACE=1),
      root-after.tar and owner-files/ (read through a READ-ONLY mount);
-  3. times fylo on a scratch copy /mnt/data/capture-<time> with no 5 s limit
-     (timing.txt), then removes only that copy;
+  3. times fylo on a scratch copy /mnt/data/capture-<time> in its own volume
+     (stack.json captureVolume, never the app's volume) with no 5 s limit
+     (timing.txt), then removes only that copy (the volume stays);
   4. starts the scheduler services again.
 TEXT
 }
@@ -158,10 +159,21 @@ snapshot_label() {
   echo "start snapshot $(basename "$(dirname "$1")")/fylo-root-at-start.tar (state at container start)"
 }
 
+scratch_volume() {
+  mesail_stack .captureVolume
+}
+
+prepare_scratch_volume() {
+  local service="$1"
+  docker run --rm --network none --user 0:0 --volume "$(scratch_volume):/mnt/data" --entrypoint chown \
+    "$(app_image "$service")" 10001:10001 /mnt/data
+}
+
 time_fylo() {
-  local service="$1" volume="$2" source="$3" scratch="$4" environment
+  local service="$1" source="$2" scratch="$3" environment
+  prepare_scratch_volume "$service" || return 1
   environment="$(fylo_environment_file "$service")"
-  docker run --rm -i --network none --user 10001:10001 --env-file "$environment" --volume "$volume:/mnt/data" \
+  docker run --rm -i --network none --user 10001:10001 --env-file "$environment" --volume "$(scratch_volume):/mnt/data" \
     --entrypoint /bin/bash "$(app_image "$service")" \
     -c "$(cat "$(dirname "$0")/capture-timing.sh")" capture-timing "$service" "$scratch" \
     "$(jq -c --arg service "$service" '.captureSteps[$service] // []' "$(mesail_stack_file)")" < "$source" || true
@@ -169,13 +181,14 @@ time_fylo() {
 }
 
 write_timing() {
-  local service="$1" volume="$2" folder="$3" stamp="$4" source
+  local service="$1" folder="$2" stamp="$3" source
   source="$(start_snapshot "$service" "$folder/fylo-trace")"
   source="${source:-$folder/root-after.tar}"
   {
     echo "capture $stamp of $service; timed on: $(snapshot_label "$source" "$folder")"
     echo "same image $(app_image "$service"), same fylo options as TACHYON 26.46.02, the app's FYLO_ variables (values not shown), no 5 s limit"
-    time_fylo "$service" "$volume" "$source" "capture-$stamp"
+    echo "scratch root in the volume $(scratch_volume) (ext4 data disk of the dev host), never in the app's volume"
+    time_fylo "$service" "$source" "capture-$stamp"
   } > "$folder/timing.txt" 2>&1
   cat "$folder/timing.txt"
 }
@@ -201,7 +214,7 @@ capture() {
   echo "volume: $volume (read only for root-after.tar)" | tee "$folder/volume.txt"
   mesail_step "capture-$stamp-root" save_root_after "$service" "$volume" "$folder" || return 1
   mesail_step "capture-$stamp-owner-files" save_owner_files "$service" "$folder"
-  mesail_step "capture-$stamp-timing" write_timing "$service" "$volume" "$folder" "$stamp"
+  mesail_step "capture-$stamp-timing" write_timing "$service" "$folder" "$stamp"
   echo "capture: done, folder $folder (keep the tars until FYLO says they can go)"
 }
 

@@ -363,5 +363,6 @@
         }
       }
     ]
-  }
+  },
+  "captureVolume": "mesail-op8-capture"
 }
